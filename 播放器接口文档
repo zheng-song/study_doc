@@ -1,0 +1,36 @@
+jacka7_rv1108 播放器接口文档
+
+1. 通信接口
+播放器采用fifo作为控制接口。控制端应该首先用命令“mkfifo -m 777 /tmp/cmd_pipe" 或者”ret = mkfifo( "/tmp/cmd_pipe", S_IFIFO | 0777 )"来创建fifo。然后再调用播放器，如格式"video 2 test.mp4".
+
+2. 播放器控制接口
+控制端在创建了fifo之后，启动播放器。在播放器启动播放后，可以用以下的控制接口来控制播放
+
+1） 前进
+f
+2）后退
+r
+3）暂停
+p
+4）静音
+m
+5）音量加
++
+6）音量减
+-
+
+控制端只需要往fifo /tmp/cmd_pipe中输入如上的字符，就可以控制相应的播放操作。
+
+新加功能
+
+a) 显示视频的总时间
+t，代码接口videoplay_get_duration(char  *filename) 返回的是视频时长，为float型
+
+b) 视频当前播放到的时刻
+c，代码接口videoplay_get_current() 返回是当前的播放时刻，为float型
+
+c) 拖动到视频的绝对时间
+a 时间，比如“a 91.23" 代表拖动到第91.23秒继续播放。 
+
+d) 快速播放（2-4倍速）
+s 倍速，比如”s 2" 代表用2倍速播放。代码接口videoplay_set_speed2(int speed)
