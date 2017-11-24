@@ -1,5 +1,7 @@
-# study_doc
+### This repository used as my study summary 
 
 **ftp://ftp1.linuxidc.com**
+
 用户名:ftp1.linuxidc.com
-密码:www.linuxidc.com
+
+密码:www.linuxidc.com 
