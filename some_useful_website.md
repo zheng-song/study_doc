@@ -8,6 +8,7 @@
 * [中国统计网][8]:提供数据分析行业资讯和技能学习资料
 * [CALIS高校学位论文库][9]:查询国内学位论文
 * [W3school][10]:免费的网站建设教程，内容包含基础的HTML到XHTML，以及进阶的XML、SQL、数据库，多媒体和WAP。
+* [typora Linux版下载方式][11]:typora
 
 
 
@@ -23,3 +24,4 @@
 [8]:http://www.itongji.cn/cms/article/index
 [9]:http://www.calis.edu.cn/
 [10]:http://www.w3school.com.cn/
+[11]:http://support.typora.io/Typora-on-Linux/
