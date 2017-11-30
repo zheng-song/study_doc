@@ -1,4 +1,4 @@
-jacka7_rv1108 播放器接口文档
+	jacka7_rv1108 播放器接口文档
 
 1. 通信接口
 播放器采用fifo作为控制接口。控制端应该首先用命令“mkfifo -m 777 /tmp/cmd_pipe" 或者”ret = mkfifo( "/tmp/cmd_pipe", S_IFIFO | 0777 )"来创建fifo。然后再调用播放器，如格式"video 2 test.mp4".
