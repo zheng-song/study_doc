@@ -9,19 +9,22 @@
 * [CALIS高校学位论文库][9]:查询国内学位论文
 * [W3school][10]:免费的网站建设教程，内容包含基础的HTML到XHTML，以及进阶的XML、SQL、数据库，多媒体和WAP。
 * [typora Linux版下载方式][11]:typora
+* [C++ GUI Qt 4编程（第二版）(中文高清PDF扫描版)+随书源码][12]
 
 
 
 
 
-[1]:https://shimo.im/
-[2]:https://mubu.com/
-[3]:https://smallpdf.com/
-[4]:http://huaban.com/
-[5]:http://www.xiachufang.com/
-[6]:http://www.fengniao.com/
-[7]:https://shuge.org/
-[8]:http://www.itongji.cn/cms/article/index
-[9]:http://www.calis.edu.cn/
-[10]:http://www.w3school.com.cn/
-[11]:http://support.typora.io/Typora-on-Linux/
+[1]: https://shimo.im/
+[2]: https://mubu.com/
+[3]: https://smallpdf.com/
+[4]: http://huaban.com/
+[5]: http://www.xiachufang.com/
+[6]: http://www.fengniao.com/
+[7]: https://shuge.org/
+[8]: http://www.itongji.cn/cms/article/index
+[9]: http://www.calis.edu.cn/
+[10]: http://www.w3school.com.cn/
+[11]: http://support.typora.io/Typora-on-Linux/
+[12]: http://www.linuxidc.com/Linux/2012-06/61979.htm
+
