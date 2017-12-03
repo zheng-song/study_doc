@@ -69,3 +69,17 @@ Qt的主要成就之一就是使用了一种机制对C++进行了扩展,并且�
 
 
 
+### [Qt 的事件处理机制](http://mobile.51cto.com/symbian-272812.htm)
+
+- 产生事件: 输入设备，键盘鼠标等。keyPressEvent，keyReleaseEvent,mousePressEvent,mouseReleaseEvent事件(他们被封装成QMouseEvent和QKeyEvent)，这些事件来自底层的操作系统，他们以异步的形式通知Qt事件处理系统。Qt也会产生很多事件，如QObject::startTimer()会触发QTimerEvent。用户的程序还能够自定义事件。
+- 事件的接收和处理者：QObject类是整个的Qt对象模型的核心，事件处理机制是QObject三大职责(内存管理、内省(intropection)与事件处理机制)之一。任何一个想要接收并处理事件的对象必须要继承自QObject类，可以选择重载QObject::event()函数或者是事件的处理权转交给父类。
+- 事件的派送者：对于non-GUI的Qt程序，由QCoreApplication负责将QEvent分发给QObject的子类-Receiver；对于GUI程序，则由QApplication负责派送。
+
+
+
+### [Qt 中的窗口刷新事件](http://mobile.51cto.com/symbian-270250.htm)
+
+- 在窗体刷新事件当中，主要说明一下`paintEvent`的使用：`void QWidget::paintEvent(QPaintEvent *event)`. Paint 这个事件只要是窗体事件需要被重绘了就会被调用，他是由窗体事件产生的,但是要求程序重画窗体部件的时候，事件循环就会从事件队列当中选中这个事件并把它分发到那个需要重画的widget当中。并不是所有的paint事件都是由窗口系统产生的，你也可以使用repaint()和update()来使用它。但是你需要知道的是，因为paintEvent()函数是protected的，你无法直接调用它。它也绕开了任何存在的事件过滤器。因为这些原因，Qt提供了一个机制，直接sending事件而不是posting。
+- `void QWidget::update()`:用于更新窗体部件，它规划了所要处理的绘制事件。但是可以被Qt优化，有时`update()`执行之后不一定会直接转到paintEvent。因为Qt会把**多个绘制事件自动的合并成一个**来加快绘制的速度,所以推荐使用这个，而不是`repaint()`,几次调用`update()`的结果通常仅仅是一次`paintEvent()`调用。利用这一点，在实现程序的时候，我们可以把所有的绘制窗体的那些语句、函数...都放到paintEvent中，通过各种if-else语句进行判断来绘制，这样对速度有很好的优化并且可以防止闪烁。
+- 绘制事件还有一点需要注意的是：当绘制事件发生时，更新的区域通常被擦除。如果需要在上一次绘制的基础上进行绘制的话，我们的做法是：使用一个临时变量保存着上次绘制之后的图，然后在这个图上进行绘制，最后再直接的显示一下这个图就ok了。这是个比较笨的方法，但也简单。***通过QPaintEvent::erased()可以得知这个窗口部件是否被擦除。写完之后记得检查一下 ，如果在设置了WRepaintNoErase窗口部件标记的时候是不会被擦除的。***
+
