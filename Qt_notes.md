@@ -478,3 +478,6 @@ Message:This is a fatal message. File:..\MessagePattern\main.cpp Line:142 Functi
 
 - 此时遵循环境变量优先的原则.即同时设置了qSetMessagePattern()和QT_MESSAGE_PATTERN环境变量,那么环境变量生效,qSetMessagePattern()不生效.
 
+
+
+
