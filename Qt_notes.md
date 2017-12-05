@@ -64,7 +64,6 @@ private:
 - 元对象代码是signal/slot机制所必须的。用moc产生的C++源文件必须与类实现一起进行编译和连接，或者用#include语句将其包含到类的源文件中。moc并不扩展#include或者#define宏定义,它只是简单的跳过所遇到的任何预处理指令。
 
 
-
 ----
 
 ### [Qt 进程间通信](http://mobile.51cto.com/symbian-270726.htm)
@@ -137,8 +136,8 @@ QT可以通过QProcess类实现前端程序对外部应用程序的调用。这�
 ####[4. Qt 内部进行间通信](http://mobile.51cto.com/symbian-270721.htm)
 
 -  **QCOP协议**
-- **信号-槽（Signal-Slot）机制**
-- **FIFO机制**
+-  **信号-槽（Signal-Slot）机制**
+-  **FIFO机制**
 
 
 
