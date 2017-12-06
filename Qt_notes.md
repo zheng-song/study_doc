@@ -216,6 +216,7 @@ bool CustomerInfoDialog::eventFilter(QObject *target, QEvent *event)
 4. 在QApplication上安装事件过滤器.QApplication上的事件过滤器将会捕获应用程序的所有的事件,而且第一个获得该事件.也就是说事件在发送给其他的任何一个event filter之前发送给QApplication的event filter.
 5. 重新实现QApplication的notify()方法.Qt使用notify()来分发事件.要想在任何的事件处理器捕获事件之前捕获事件,唯一的方法就是重新实现QApplication的notify()方法.
 
+
 例如:实现一个模拟时钟小部件,主要就是使用paintEvent事件.
 
 ```
