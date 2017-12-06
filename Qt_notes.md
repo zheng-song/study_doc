@@ -486,8 +486,43 @@ Message:This is a fatal message. File:..\MessagePattern\main.cpp Line:142 Functi
 
 
 
-### 为Qt程序提供图片的方法
+### Qt程序提供图片的方法和图片资源的用处
 
-- **把图片保存到文件当中,并在运行的时候载入他们:**
+- **把图片保存到文件当中,并在运行的时候载入他们:** `image=newQImage("./1.png");` 这种方法要在程序运行的时候去读图片，需要在程序的运行目录下放置好图片，优点是节省了内存，但是读取的速度慢。
 - **把XMP文件包含在源代码当中.(这一文件之所以可行,是因为XMP文件也是有效的C++文件.):**
 - **使用Qt的资源机制(resource mechanism):**资源机制比运行时载入文件的方法更方便,并且适用于所支持的任意文件格式.资源文件使用的简单的XML文件格式.资源文件会被编译到应用程序的可执行文件当中,因此并不会弄丢它们.引用资源文件需要带路径前缀**:/**.资源文件可以是任意类型的文件(并不仅仅是图像).并且可以在Qt需要文件名的大多数地方使用它们.
+
+```
+将图片编译进工程中
+QPixmap m_Pixmap = QPixmap(QString(":/images/A.png"));
+ui.label->setPixmap(m_Pixmap);
+ui.label->resize(m_Pixmap.width(),m_Pixmap.height());
+或者将图像文件加载进QImage对象中
+QImage* imgSource = new QImage(QString(":/images/A.png"));
+QImage* imgScaled = new QImage();
+// 图像缩放指定图片的宽和高，根据纵横比模式和转换模式从原有图像返回一个经过比例转换的图像
+*imgScaled = imgSource->scaled(400,300,Qt::KeepAspectRatio);
+ui.label->setMaximumSize(400,300);
+// QPixmap对象获得图像，QLabel显示QPixmap图像
+ui.label->setPixmap(QPixmap::fromImage(*imgScaled));
+
+```
+
+
+
+> 图片是一种资源，而在Qt中，对于资源的使用有其独特的使用方式！
+>
+> 1. 通常资源在内存中使用资源对象树来表示，该树在程序启动时创建。
+> 2. 对于资源而言，通常要将其加入资源树才能够加载到内存当中并被程序所使用。
+> 3. 将一个图片资源放到程序的资源对象树中是用函数QResource::registerResource()来实现的。即，要将资源向这颗资源树进行注册，这样才对在系统中用new创建了这个资源**叶子**
+> 4. 当程序结束运行的时候再进行反注册。因此此时图片资源会一直占用内存。由于资源一直在内存中，避免了IO操作，从而加快了程序运行的速度，但是代价是消耗内存。
+> 5. 使用资源文件的图片在程序发布的时候不需要再目录下放置图片，主要是通过.qrc文件。如image.qrc文件，此文件在编译的时候会生成qrc_image.cpp文件，查看此文件会发现其主要是三个static const数组
+>
+>
+> ```
+> qt_resource_data[]
+> qt_resource_name[]
+> qt_resource_struct[]
+> ```
+>
+> qt_resource_data[]中存放的就是图片的二进制数据。
