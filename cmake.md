@@ -1,20 +1,6 @@
 http://blog.nemoge.com/trick-for-overload-macro-function-in-c/
 
-
-
 http://www.tk4479.net/osean_li/article/details/55057690
-
-
-
-http://digdeeply.org/archives/0421949.html
-
-
-
-http://blog.csdn.net/yuandi_xia/article/details/42191793
-
-
-
-
 
 cmake 和autotools是makefile的上层工具,它们的目的是为了产生可移植的makefile,并简化自己动手写makefile时的巨大的工作量.这样的项目构建工具能够帮助我们在不同的平台上更好的管理和组织我们的代码以及其编译过程.cmake和autotools是不同的项目管理工具，有各自的特点和用户群.
 
@@ -32,7 +18,6 @@ cmake 和autotools是makefile的上层工具,它们的目的是为了产生可�
 #### [cmake中一些预定义的变量](http://blog.csdn.net/wzzfeitian/article/details/40963457/)
 
 - ​
-
 
 
 ----
