@@ -526,3 +526,30 @@ ui.label->setPixmap(QPixmap::fromImage(*imgScaled));
 > ```
 >
 > qt_resource_data[]中存放的就是图片的二进制数据。
+
+
+
+
+
+### Qt 设置widgets的属性
+
+1. 使用palette()设置窗体的背景色:效果,窗口整体透明,但是窗口控件不透明,QLabel控件只是字显示,控件背景色透明
+
+```
+QPalette pal = palette();
+pal.setColor(QPalette::Background,QColor(0xff,0xff,0xff,0x00));//QColor(r,g,b,a)
+setPalette(pal);
+```
+
+
+
+QPainter类用于在Widgets和其他的paint devices执行低级绘画,可以绘制包括任何内容,QPainter能够在任何继承于QPaintDevice的类上操作.QPainter通常用于在一个widget的paintEvent()里面使用.QPainter的核心功能是绘画,但是提供了可以让你定制它的属性和呈现质量的函数
+
+#### autoFillBackground
+
+该属性控制widget的背景是否自动填充,如果允许该属性,那么会导致Qt在唤醒paint event之前自动填充该widget的背景(该属性默认是关闭的),**the color used is defined by the "QPalette::Window" color role from the widget's palette.**,除此之外,Windows使用**QPaltte::Window**来填充,除非 **WA_OpaquePaintEvent**或者是**WA_NoSystemBackground**属性被设置. 此外,如果部件父类的背景是static gradient的话,这个属性就不能够被turned off
+
+**Warning:** autoFillBackground在和Qt style sheet 配合(conjunction)使用的时候要特别小心,当一个部件使用style sheet设置了background或者是border-image的时候,这个属性会自动的关闭.
+
+> - ***WA_NoSystemBackground:*** 用来表明widget没有backgound(例如:当widget收到一个paint event的时候,背景不会被自动的绘制.). **注意:**不像WA_OpaquePaintEvent,新出现的区域永远不会使用background来填充(例如:在第一次显示一个新的窗口之后,user 能够 see "through" it,直到程序触发paint events.)
+> - ***WA_OpaquePaintEvent:*** 表明widget在收到paint event之后才绘制其所有的pixels.因此,在形成paint events之前,它不需要类似updating,resizing,scrolling和fous changes之类的操作来erase widget. 这个属性提供了一个小小的优化,帮助减少不支持double buffering的系统的闪烁,并且避免了在绘画前清除背景所需要的周期. ---- **注意:** 不像WA_NoSystemBackground,这个属性尽力的避免透明的窗口背景
