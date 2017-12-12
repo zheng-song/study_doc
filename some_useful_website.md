@@ -10,6 +10,7 @@
 * [W3school][10]:免费的网站建设教程，内容包含基础的HTML到XHTML，以及进阶的XML、SQL、数据库，多媒体和WAP。
 * [typora Linux版下载方式][11]:typora
 * [C++ GUI Qt 4编程（第二版）(中文高清PDF扫描版)+随书源码][12]
+* [高质量C/C++编程][13]
 
 
 
@@ -27,4 +28,4 @@
 [10]: http://www.w3school.com.cn/
 [11]: http://support.typora.io/Typora-on-Linux/
 [12]: http://www.linuxidc.com/Linux/2012-06/61979.htm
-
+[13]: http://vdisk.weibo.com/s/C3CBb_PwhI0Ot
