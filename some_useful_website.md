@@ -11,6 +11,7 @@
 * [typora Linux版下载方式][11]:typora
 * [C++ GUI Qt 4编程（第二版）(中文高清PDF扫描版)+随书源码][12]
 * [高质量C/C++编程][13]
+* [加密与解密][14]
 
 
 
@@ -22,10 +23,12 @@
 [4]: http://huaban.com/
 [5]: http://www.xiachufang.com/
 [6]: http://www.fengniao.com/
-[7]: https://shuge.org/
+[7]: https://shuge.org4
 [8]: http://www.itongji.cn/cms/article/index
 [9]: http://www.calis.edu.cn/
 [10]: http://www.w3school.com.cn/
 [11]: http://support.typora.io/Typora-on-Linux/
 [12]: http://www.linuxidc.com/Linux/2012-06/61979.htm
 [13]: http://vdisk.weibo.com/s/C3CBb_PwhI0Ot
+[14]: http://www.jb51.net/books/66338.html	"我的网盘中"
+[15]: 
