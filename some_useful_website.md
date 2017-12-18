@@ -11,7 +11,17 @@
 * [typora Linux版下载方式][11]:typora
 * [C++ GUI Qt 4编程（第二版）(中文高清PDF扫描版)+随书源码][12]
 * [高质量C/C++编程][13]
-* [加密与解密][14]
+* [<< 加密与解密.pdf >>][14]
+* [<< C++ 设计模式.pdf >>][15]
+* [<< 设计模式初学者指南 >>][16]
+* [<< 设计模式之禅 >>][17]
+* [<< C++ 代码设计与重用 >>][18]
+* [<设计模式解析>][19]
+* [< C++图形与游戏编程基础 >][20]
+* [< C++编程调试秘笈 >][21]
+* [< 泛型编程与STL >][22]
+* [< C++STL程序员开发指南 >][23]
+* [< C++面向对象多线程编程 >][24]
 
 
 
@@ -31,4 +41,13 @@
 [12]: http://www.linuxidc.com/Linux/2012-06/61979.htm
 [13]: http://vdisk.weibo.com/s/C3CBb_PwhI0Ot
 [14]: http://www.jb51.net/books/66338.html	"我的网盘中"
-[15]: 
+[15]: http://vdisk.weibo.com/s/avnGhzrAiy-Rl	" "
+[16]: http://www.jb51.net/books/349520.html
+[17]: http://www.jb51.net/books/284251.html
+[18]: http://www.jb51.net/books/230219.html
+[19]: http://ishare.iask.sina.com.cn/f/61417068.html
+[20]: http://www.jb51.net/books/516211.html
+[21]: http://www.jb51.net/books/331229.html
+[22]: http://www.jb51.net/books/209398.html
+[23]: http://www.jb51.net/books/73868.html
+[24]: http://www.jb51.net/books/198488.html
