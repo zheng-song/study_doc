@@ -772,7 +772,7 @@ valarray类由头文件vlaarray支持，这个类用于处理数值(或者是具
 
 
 
-### 私有继承
+#### 私有继承
 
 C++还有另外一种实现has-a关系的方法----私有继承. 使用私有继承,基类的公有成员和保护成员都将作为派生类的私有成员,这意味着基类的方法将不会成为派生对象公有接口的一部分,但是可以在派生类的成员函数中使用它们.
 
@@ -782,11 +782,48 @@ C++还有另外一种实现has-a关系的方法----私有继承. 使用私有继
 
 
 
+#### 保护继承
+
+使用保护继承时,基类的公有成员和保护成员都将成为派生类的保护成员.和私有继承一样,基类的接口在派生类中也是可用的,但是在继承结构层次之外是不可用的.当从派生类派生出另外一个类时,私有继承和保护继承之间的区别便显示出来. 使用私有继承时第三代类将不能使用基类的接口,因为基类的公有方法在派生类中变成了私有方法;使用保护继承时,基类的公有方法在第二代中将变成受保护的.,因此第三代派生类中可以使用它们.
+
+
+
+#### 使用using重新定义访问权限
+
+使用保护派生或者是私有派生时,基类的公有成员将成为保护成员或者是私有成员.假设要让基类的方法在派生类的外面可用,有以下两种方法:
+
+1. **定义一个使用该方法的派生类方法;** 假设Student类能够使用valarray类的sum方法,可以在Student类的声明当中声明一个sum()方法,如下:
+
+```C++
+class Student:private std::valarray<double> , std::string{
+public:
+  double sum()const{return std::vararry<double>::sum();} 
+  // 这样Student对象就可以调用Student::sum(),后者将再调用valarray<double>::sum()方法应用于被包含的valarray对象
+}
+```
+
+2. **将函数调用包装在另外一个函数调用当中;** 即使用一个using声明(就像名称空间那样)来指出派生类可以使用特定的基类成员,即使采用的是私有派生.例如,假设希望通过Student类能够使用valarray的方法min()和max(),可以在student.h的公有部分加入如下using声明:
+
+```C++
+class Student:private std::valarray<double>,private std::string{
+public:
+  using std::valarray<double>::min;
+  using std::valarray<double>::max;
+}
+```
+
+上述using声明使得valarray< double >::min()和valarray< double >::max()可用,**注意,using声明只是用成员名----没有圆括号,函数特征标和返回类型.**
 
 
 
 
 
+### 多重继承(Multi Inherit)
+
+MI的两个主要问题是:
+
+1. 从两个不同的基类继承同名方法;
+2. 从两个或者更多的相关基类那里继承同一个类的多个实例.
 
 
 
