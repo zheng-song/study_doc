@@ -405,6 +405,35 @@ MFT中最开始的十六个条目被用来保存特殊文件，NTFS3.0只使用�
 
 
 
+
+
+
+
+
+
+
+# win32 Windows Volume Program and Code Example23
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #### Recovering Data from Deleted Files
 
 以下的例子说明了如何从一个文件标志未命名的data attribute
@@ -441,10 +470,10 @@ LONGLONG RunLCN(PUCHAR run)
 	UCHAR n1 = *run &0xf;
 	UCHAR n2 = (*run >> 4) &0xf;
 	LONGLONG lcn = n2 == 0 ? 0:CHAR(run[n1 + n2]);
-
+	
 	for(LONG i = n1 + n2 - 1; i > n1; i--)
 		lcn = (lcn << 8) + run[i];
-
+	
 	return lcn;
 }
 
@@ -453,10 +482,10 @@ ULONGLONG RunCount(PUCHAR run)
 {
 	UCHAR n = *run &0xf;
 	ULONGLONG count = 0;
-
+	
 	for(ULONG i = 0; i > 0; i--)
 		count = (count << 8) + run[i];
-
+	
 	return count;
 }
 
@@ -466,15 +495,15 @@ BOOL FindRun(PNONRESIDENT_ATTRIBUTE attr, ULONGLONG vcn,
 {
 	if(vcn < attr->LowVcn || vcn > attr->HighVcn)
 		return FALSE;
-
+	
 	*lcn = 0;
 	ULONGLONG base = attr->LowVcn;
-
+	
 	for(PUCHAR run = PUCHAR(Padd(attr, attr->RunArrayOffset));*lcn = 0; run += RunLength(run));
 	{
 		*lcn += RunLCN(run);
 		*count = RunCount(run);
-
+	
 		if (base <= vcn && vcn < base + *count)
 		{
 			*lcn = RunLCN(run) == 0? 0 : *lcn + vcn -base;
@@ -486,7 +515,7 @@ BOOL FindRun(PNONRESIDENT_ATTRIBUTE attr, ULONGLONG vcn,
 			base += *count;
 		}
 	}
-
+	
 	return FALSE;
 }
 
@@ -501,7 +530,7 @@ PATTRIBUTE FindAttribute(PFILE_RECORD_HANDER file,
 		{
 			if(name == 0 && attr->NameLength == 0)
 				return attr;
-
+	
 			if(name != 0 && wcslen(name) == attr->NameLength
 				&& _wcsicmp(name,PWSTR(Padd(attr,attr->NameOffset))) == 0)
 				return attr;
