@@ -1,3 +1,5 @@
+[TOC]
+
 在winioctl.h当中定义的一个有趣的文件系统控制操作参数是`FSCTL_GET_NTFS_RECORD`，这个参数用来从一个NTFS卷的MFT(Master File Table)中获取一个文件记录。当用这个控制代码调用`ZwFsControlFile(或者是Win32的函数DeviceIoControl)` 时,InputBuffer参数指向一个NTFS_FILE_RECORD_INOUT_BUFFER的结构体，OutputBuffer参数指向一个足够大的能够容纳一个NTFS_FILE_RECORD_OUTPUT_BUFFRE结构的和file record的缓存区。
 
 ```c++
@@ -414,44 +416,15 @@ MFT中最开始的十六个条目被用来保存特殊文件，NTFS3.0只使用�
 
 # win32 Windows Volume Program and Code Example23
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #### Recovering Data from Deleted Files
 
 以下的例子说明了如何从一个文件标志未命名的data attribute
 
-
-
-
-
-
-
-
-
-
+```C++
 #include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "ntfs.h"
-
 ULONG BytesPerFileRecord;
 HANDLE hVolume;
 BOOT_BLOCK bootb;
@@ -477,7 +450,6 @@ LONGLONG RunLCN(PUCHAR run)
 	return lcn;
 }
 
-
 ULONGLONG RunCount(PUCHAR run)
 {
 	UCHAR n = *run &0xf;
@@ -488,7 +460,6 @@ ULONGLONG RunCount(PUCHAR run)
 	
 	return count;
 }
-
 
 BOOL FindRun(PNONRESIDENT_ATTRIBUTE attr, ULONGLONG vcn,
 			 PULONGLONG lcn, PULONGLONG count)
@@ -539,38 +510,15 @@ PATTRIBUTE FindAttribute(PFILE_RECORD_HANDER file,
 	return 0;
 }
 
-
 VOID FixUpdateSequenceArray(PFILE_RECORD_HEADER file)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
 
 
 // ConsoleApplication1.cpp: 定义控制台应用程序的入口点。
 //
 
+```C++
 #include "stdafx.h"
 #include <Windows.h>
 #include <winioctl.h>
@@ -641,14 +589,8 @@ bool ReadDisk(unsigned char *&out, DWORD start, DWORD size)
 		return false;
 	}
 	BY_HANDLE_FILE_INFORMATION FileInformation;
-
-
-​	
-
 //	GetLogicalDriveStrings();
-​	
 //	SetFilePointer(handle, );
-
 	unsigned char *buffer = new unsigned char[size + 1];
 	DWORD readsize;
 	if (ReadFile(handle, buffer, size, &readsize, &over) == 0)
@@ -661,3 +603,55 @@ bool ReadDisk(unsigned char *&out, DWORD start, DWORD size)
 	out = buffer;
 	return true;
 }
+```
+
+
+
+
+
+
+
+## NFTS 系统中查找文件的流程
+
+1. 从BootSector中读出文件所在的磁盘的MFT起始簇
+
+   `hVolume = CreateFile(TEXT("\\\\.\\C:"), GENERIC_READ,FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);`
+
+   `ReadFile(hVolume, &bootb, sizeof bootb, &n, 0)`
+
+   ![NTFSBootSector.png](http://upload-images.jianshu.io/upload_images/6128001-4e9ea324df41ba3c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+   bootb为BOOT_BLOCK类型的结构体。该结构体表示了NTFS Boot Sector的结构。
+
+   ```C++
+   typedef struct { //512B   
+   	UCHAR Jump[3];		//Jump Instruction 跳过3个字节   
+   	UCHAR Format[8]; 	//OEM ID ‘N’'T' 'F' 'S' 0x20(空格) 0x20 0x20 0x20   
+   	USHORT BytesPerSector;//Byte/Sector 每扇区有多少字节 一般为512B 0x200  
+   	UCHAR SectorsPerCluster;//Sect/clust 每簇有多少个扇区   
+   	USHORT BootSectors;//res   
+   	UCHAR Mbz1;//保留0  0x00 
+   	USHORT Mbz2;//保留0 0x0000
+   	USHORT Reserved1;// unused  保留0   
+   	UCHAR MediaType;// MediaDesc 介质描述符，硬盘为0xf8   
+   	USHORT Mbz3;//0x0000    总是为0   
+   	USHORT SectorsPerTrack;// Sect/track 	每道扇区数，一般为0x3f   
+   	USHORT NumberOfHeads;// Number heads  	磁头数   
+   	ULONG PartitionOffset;// Hidden Sectors	该分区的便宜（即该分区前的隐含扇区数 一般为磁道扇区数0x3f 63）   
+   	ULONG Reserved2[2];	// unused
+    	ULONGLONG TotalSectors;// Total Sectors	该分区总扇区数   
+   	ULONGLONG MftStartLcn;// Logical Cluster of $MFT  MFT表的起始簇号LCN   
+   	ULONGLONG Mft2StartLcn;// Logical Cluster of $MFTMirr  MFT备份表的起始簇号LCN   
+   	ULONG ClustersPerFileRecord;//Clust/File Record segment 每个MFT记录包含几个簇  记录的字节不一定为：ClustersPerFileRecord*SectorsPerCluster*BytesPerSector  
+   	ULONG ClustersPerIndexBlock;// Clusters/index Block  每个索引块的簇数   
+   	LARGE_INTEGER VolumeSerialNumber;//Volume Serial Number   卷序列号   
+   	UCHAR Code[0x1AE]; // 包含Checksum和BootCode之间的部分
+   	USHORT BootSignature; //最后的55和AA部分
+   } BOOT_BLOCK, *PBOOT_BLOCK;
+   ```
+
+   ​
+
+2. ​
+
+   ​

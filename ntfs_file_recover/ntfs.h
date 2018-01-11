@@ -22,8 +22,9 @@ typedef struct {
 	ULONG Type;
 	USHORT UsaOffset;
 	USHORT UsaCount;
-	USN Usn;
-}NTFS_RECORD_HEADER, *PNTFS_RECORD_HEADER;
+	USN Usn; //USN == LONLONG
+}NTFS_RECORD_HEADER, *PNTFS_RECORD_HEADER; // 16B
+
 
 //****FILE RECORD_HEADER****
 typedef struct {
@@ -36,7 +37,7 @@ typedef struct {
 	ULONG BytesAllocated;
 	ULONGLONG BaseFileRecord;
 	USHORT NextAttributeNumber;
-}FILE_RECORD_HEADER, *PFILE_RECORD_HEADER;
+}FILE_RECORD_HEADER, *PFILE_RECORD_HEADER; // 42B
 
 
 //文件记录中按属性非降序（因为有时连续多个相同的属性）排列，   
@@ -100,12 +101,14 @@ typedef struct {
 	USHORT AttributeNumber;
 }ATTRIBUTE, *PATTRIBUTE;
 
+
 typedef struct {
 	ATTRIBUTE Attribute;
 	ULONG ValueLength; //属性值长度   
 	USHORT ValueOffset; //属性值偏移   
 	USHORT Flags; // 索引标志 0x0001 = Indexed   
 } RESIDENT_ATTRIBUTE, *PRESIDENT_ATTRIBUTE;
+
 
 typedef struct {
 	ATTRIBUTE Attribute;
@@ -120,6 +123,7 @@ typedef struct {
 	ULONGLONG CompressedSize;    // Only when compressed   
 } NONRESIDENT_ATTRIBUTE, *PNONRESIDENT_ATTRIBUTE;
 
+
 typedef struct {
 	ULONGLONG CreationTime;
 	ULONGLONG ChangeTime;
@@ -133,6 +137,7 @@ typedef struct {
 	USN Usn;                      // NTFS 3.0
 } STANDARD_INFORMATION, *PSTANDARD_INFORMATION;
 
+
 typedef struct {
 	ATTRIBUTE_TYPE AttributeType;
 	USHORT Length;
@@ -143,18 +148,8 @@ typedef struct {
 	USHORT AttributeNumber;
 	USHORT AlignmentOrReserved[3];
 } ATTRIBUTE_LIST, *PATTRIBUTE_LIST;
-/*
-typedef struct {
-	ATTRIBUTE_TYPE AttributeType;   //属性类型   
-	USHORT Length;                  //本记录长度   
-	UCHAR NameLength;               //属性名长度   
-	UCHAR NameOffset;               //属性名偏移   
-	ULONGLONG LowVcn;               //起始VCN   
-	ULONGLONG FileReferenceNumber;  //属性的文件参考号   
-	USHORT AttributeNumber;         //标识   
-	WCHAR Name[1];
-} ATTRIBUTE_LIST, *PATTRIBUTE_LIST;
-*/
+
+
 typedef struct { //文件名属性的值区域   
 	ULONGLONG DirectoryFileReferenceNumber; //父目录的FRN   
 	ULONGLONG CreationTime;
@@ -170,6 +165,7 @@ typedef struct { //文件名属性的值区域
 	WCHAR Name[1];
 } FILENAME_ATTRIBUTE, *PFILENAME_ATTRIBUTE;
 
+
 typedef struct {
 	GUID ObjectId;
 	union {
@@ -182,6 +178,7 @@ typedef struct {
 	};
 } OBJECTID_ATTRIBUTE, *POBJECTID_ATTRIBUTE;
 
+
 typedef struct {
 	ULONG Unknown[2];
 	UCHAR MajorVersion;
@@ -189,12 +186,14 @@ typedef struct {
 	USHORT Flags;
 } VOLUME_INFORMATION, *PVOLUME_INFORMATION;
 
+
 typedef struct {
 	ULONG EntriesOffset;
 	ULONG IndexBlockLength;
 	ULONG AllocatedSize;
 	ULONG Flags; // 0x00 = Small directory, 0x01 = Large directory
 } DIRECTORY_INDEX, *PDIRECTORY_INDEX;
+
 
 typedef struct {
 	ULONGLONG FileReferenceNumber;
@@ -205,6 +204,7 @@ typedef struct {
 				 // ULONGLONG Vcn; // VCN in IndexAllocation of earlier entries
 } DIRECTORY_ENTRY, *PDIRECTORY_ENTRY;
 
+
 typedef struct {
 	ATTRIBUTE_TYPE Type;
 	ULONG CollationRule;
@@ -214,38 +214,43 @@ typedef struct {
 } INDEX_ROOT, *PINDEX_ROOT;
 
 
-
 #pragma pack(push,1)   
+/* 该结构体当中定义的是NTFS的Boot Sector结构
+ * 
+ */
 typedef struct { //512B   
-	UCHAR Jump[3];//跳过3个字节   
-	UCHAR Format[8]; //‘N’'T' 'F' 'S' 0x20 0x20 0x20 0x20   
-	USHORT BytesPerSector;//每扇区有多少字节 一般为512B 0x200   
+	UCHAR Jump[3];			//跳过3个字节   
+	UCHAR Format[8]; 		//‘N’'T' 'F' 'S' 0x20 0x20 0x20 0x20   
+	USHORT BytesPerSector;	//每扇区有多少字节 一般为512B 0x200   
 	UCHAR SectorsPerCluster;//每簇有多少个扇区   
-	USHORT BootSectors;//   
-	UCHAR Mbz1;//保留0   
-	USHORT Mbz2;//保留0   
-	USHORT Reserved1;//保留0   
-	UCHAR MediaType;//介质描述符，硬盘为0xf8   
-	USHORT Mbz3;//总为0   
-	USHORT SectorsPerTrack;//每道扇区数，一般为0x3f   
-	USHORT NumberOfHeads;//磁头数   
-	ULONG PartitionOffset;//该分区的便宜（即该分区前的隐含扇区数 一般为磁道扇区数0x3f 63）   
+	USHORT BootSectors;		//   
+	UCHAR Mbz1;				//保留0   
+	USHORT Mbz2;			//保留0   
+	USHORT Reserved1;		//保留0   
+	UCHAR MediaType;		//介质描述符，硬盘为0xf8   
+	USHORT Mbz3;			//总为0   
+	USHORT SectorsPerTrack;	//每道扇区数，一般为0x3f   
+	USHORT NumberOfHeads;	//磁头数   
+	ULONG PartitionOffset;	//该分区的便宜（即该分区前的隐含扇区数 一般为磁道扇区数0x3f 63）   
 	ULONG Reserved2[2];
-	ULONGLONG TotalSectors;//该分区总扇区数   
-	ULONGLONG MftStartLcn;//MFT表的起始簇号LCN   
-	ULONGLONG Mft2StartLcn;//MFT备份表的起始簇号LCN   
+	ULONGLONG TotalSectors;	//该分区总扇区数   
+	ULONGLONG MftStartLcn;	//MFT表的起始簇号LCN   
+	ULONGLONG Mft2StartLcn;	//MFT备份表的起始簇号LCN   
 	ULONG ClustersPerFileRecord;//每个MFT记录包含几个簇  记录的字节不一定为：ClustersPerFileRecord*SectorsPerCluster*BytesPerSector  
 	ULONG ClustersPerIndexBlock;//每个索引块的簇数   
 	LARGE_INTEGER VolumeSerialNumber;//卷序列号   
 	UCHAR Code[0x1AE];
 	USHORT BootSignature;
 } BOOT_BLOCK, *PBOOT_BLOCK;
+
 #pragma pack(pop) 
 
 
 
-#if 0
 
+
+
+#if 0
 struct MY_USN_RECORD{
 	DWORDLONG FileReferenceNumber;			//文件引用数
 	DWORDLONG ParentFileReferenceNumber;	//父文件引用树
