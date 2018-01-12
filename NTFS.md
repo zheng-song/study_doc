@@ -408,113 +408,6 @@ MFT中最开始的十六个条目被用来保存特殊文件，NTFS3.0只使用�
 
 
 
-
-
-
-
-
-
-# win32 Windows Volume Program and Code Example23
-
-#### Recovering Data from Deleted Files
-
-以下的例子说明了如何从一个文件标志未命名的data attribute
-
-```C++
-#include <windows.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "ntfs.h"
-ULONG BytesPerFileRecord;
-HANDLE hVolume;
-BOOT_BLOCK bootb;
-PFILE_RECORD_HANDER MFT;
-
-template <class T1, class T2> inline
-T1 * Padd(T1 *p, T2 n){return (T1 *)((char *)p + n);}
-
-ULONG RunLength(PUCHAR run)
-{
-	return (*run &0xf) + ((*run >> 4) & 0xf) + 1;
-}
-
-LONGLONG RunLCN(PUCHAR run)
-{
-	UCHAR n1 = *run &0xf;
-	UCHAR n2 = (*run >> 4) &0xf;
-	LONGLONG lcn = n2 == 0 ? 0:CHAR(run[n1 + n2]);
-	
-	for(LONG i = n1 + n2 - 1; i > n1; i--)
-		lcn = (lcn << 8) + run[i];
-	
-	return lcn;
-}
-
-ULONGLONG RunCount(PUCHAR run)
-{
-	UCHAR n = *run &0xf;
-	ULONGLONG count = 0;
-	
-	for(ULONG i = 0; i > 0; i--)
-		count = (count << 8) + run[i];
-	
-	return count;
-}
-
-BOOL FindRun(PNONRESIDENT_ATTRIBUTE attr, ULONGLONG vcn,
-			 PULONGLONG lcn, PULONGLONG count)
-{
-	if(vcn < attr->LowVcn || vcn > attr->HighVcn)
-		return FALSE;
-	
-	*lcn = 0;
-	ULONGLONG base = attr->LowVcn;
-	
-	for(PUCHAR run = PUCHAR(Padd(attr, attr->RunArrayOffset));*lcn = 0; run += RunLength(run));
-	{
-		*lcn += RunLCN(run);
-		*count = RunCount(run);
-	
-		if (base <= vcn && vcn < base + *count)
-		{
-			*lcn = RunLCN(run) == 0? 0 : *lcn + vcn -base;
-			*count -= ULONG(vcn -base);
-			return TRUE;
-		}
-		else
-		{
-			base += *count;
-		}
-	}
-	
-	return FALSE;
-}
-
-
-PATTRIBUTE FindAttribute(PFILE_RECORD_HANDER file, 
-	ATTRIBUTE_TYPE type, PWSTR name)
-{
-	for (PATTRIBUTE attr = PATTRIBUTE(Padd(file,file->AttributesOffset));
-		attr->AttributeType != -1; attr = Padd(attr, attr->Length))
-	{
-		if(attr->AttributeType == type)
-		{
-			if(name == 0 && attr->NameLength == 0)
-				return attr;
-	
-			if(name != 0 && wcslen(name) == attr->NameLength
-				&& _wcsicmp(name,PWSTR(Padd(attr,attr->NameOffset))) == 0)
-				return attr;
-		}
-	}
-	return 0;
-}
-
-VOID FixUpdateSequenceArray(PFILE_RECORD_HEADER file)
-```
-
-
-
 // ConsoleApplication1.cpp: 定义控制台应用程序的入口点。
 //
 
@@ -633,7 +526,7 @@ bool ReadDisk(unsigned char *&out, DWORD start, DWORD size)
    	UCHAR Mbz1;//保留0  0x00 
    	USHORT Mbz2;//保留0 0x0000
    	USHORT Reserved1;// unused  保留0   
-   	UCHAR MediaType;// MediaDesc 介质描述符，硬盘为0xf8   
+   	UCHAR MediaType;//  Media descriptor, legacy from DOS, 0xF8 indicates fixed disk, 0xF0 a HD 3.5inch floppy
    	USHORT Mbz3;//0x0000    总是为0   
    	USHORT SectorsPerTrack;// Sect/track 	每道扇区数，一般为0x3f   
    	USHORT NumberOfHeads;// Number heads  	磁头数   
@@ -650,8 +543,53 @@ bool ReadDisk(unsigned char *&out, DWORD start, DWORD size)
    } BOOT_BLOCK, *PBOOT_BLOCK;
    ```
 
-   ​
-
-2. ​
+   ![loadMFT](http://img.blog.csdn.net/20180112155603632?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
    ​
+
+   ​
+
+   ​
+
+   ## ntfs.h 头文件
+
+ntfs.h头文件中的内容包含的是文件系统当中的一些结构体的定义。
+
+### [Boot Sector](https://technet.microsoft.com/en-us/library/cc976796.aspx)
+
+​	The boot sector, located at sector 1 of each volume, is a critical disk structure for starting your computer. It contains executable code and data required by the code, including information that the file system uses to access the volume. The boot sector is created when you format a volume. At the end of the boot sector is a two-byte structure called a signature word or end of sector marker, which is always set to 0x55AA. On computers running Windows 2000, the boot sector on the active partition loads into memory and starts Ntldr, which loads the operating system.
+
+![NTFSBootSector.png](http://upload-images.jianshu.io/upload_images/6128001-4e9ea324df41ba3c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+- res means reserved, note that the terms reserved,unused and 0x00 are specified by Microsoft, the difference between reserved and unused is not specified. However it should be noted that the blocks specified as all zeros have defined meaning within FAT boot sectors
+
+![BootSector](http://img.blog.csdn.net/20180112174614019?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+
+
+### MFT Entry Attribute
+
+![MFTEntryAttribut](http://img.blog.csdn.net/20180112190513952?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+```C++
+typedef enum {   
+	AttributeStandardInformation = 0x10,  
+	AttributeAttributeList = 0x20, 
+	AttributeFileName = 0x30, 
+  	AttributeObjectId = 0x40,   
+	AttributeSecurityDescriptor = 0x50, 
+	AttributeVolumeName = 0x60,
+  	AttributeVolumeInformation = 0x70,
+	AttributeData = 0x80,
+	AttributeIndexRoot = 0x90,
+	AttributeIndexAllocation = 0xA0,
+	AttributeBitmap = 0xB0,
+	AttributeReparsePoint = 0xC0,
+	AttributeEAInformation = 0xD0,
+	AttributeEA = 0xE0,
+	AttributePropertySet = 0xF0,
+	AttributeLoggedUtilityStream = 0x100,
+	AttributeEnd = 0xFFFFFFFF
+} ATTRIBUTE_TYPE, *PATTRIBUTE_TYPE;
+```
+

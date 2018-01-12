@@ -19,24 +19,27 @@
 
 // **NTFS RECORD HEADER**
 typedef struct {
-	ULONG Type;
-	USHORT UsaOffset;
-	USHORT UsaCount;
-	USN Usn; //USN == LONLONG
+	ULONG Type;  		// 4B 'ELIF','XDNI','DAAB','ELOH','DKHC'
+	USHORT UsaOffset;	// 更新序列号数组偏移，校验值地址
+	USHORT UsaCount;	// 1+n 1为校验值个数 n为待替换值的个数 fixup
+	USN Usn; 			//USN == LONLONG 8B 每一次记录被修改，USN都会变化
 }NTFS_RECORD_HEADER, *PNTFS_RECORD_HEADER; // 16B
 
 
 //****FILE RECORD_HEADER****
 typedef struct {
-	NTFS_RECORD_HEADER Ntfs;
-	USHORT SequenceNumber;
-	USHORT LinkCount;
-	USHORT AttributeOffset;
-	USHORT Flags;
-	ULONG BytesInUse;
-	ULONG BytesAllocated;
-	ULONGLONG BaseFileRecord;
-	USHORT NextAttributeNumber;
+	NTFS_RECORD_HEADER Ntfs;   	// Ntfs.type 总是'ELIF'
+	USHORT SequenceNumber;		// FileReferenceNumber的高16位  i是低48位 0~total_file_count-1  
+	// 用于记录主文件表记录被重复使用的次数 
+	USHORT LinkCount;			// 记录硬连接的数目，只出现在基本文件记录中
+	USHORT AttributeOffset;		// 第一个属性的偏移 
+	USHORT Flags;				// 0x0001 = InUse, 0x0002 = Directory
+	ULONG BytesInUse;			// 记录头和属性的总长度，即文件记录的实际长度文件,即记录在磁盘上实际占用的字节空间。
+	ULONG BytesAllocated;		// 总共分配给记录的长度
+	ULONGLONG BaseFileRecord;	// 基本文件记录中的文件索引号
+	//对于基本文件记录，其值为0，如果不为0，则是一个主文件表的文件索引号，指向所属的基本文件记录中的文件记录号，
+	//在基本文件记录中包含有扩展文件记录的信息，存储在“属性列表ATTRIBUTE_LIST”属性中。
+	USHORT NextAttributeNumber;	// 下一属性ID	
 }FILE_RECORD_HEADER, *PFILE_RECORD_HEADER; // 42B
 
 
@@ -93,23 +96,27 @@ typedef enum {
 
 typedef struct {
 	ATTRIBUTE_TYPE AttributeType;
-	ULONG Length;
-	BOOLEAN Nonresident;
-	UCHAR NameLength;
-	USHORT NameOffset;
-	USHORT Flags;	 //0x0001 = Compressed
-	USHORT AttributeNumber;
+	ULONG AttributeLength; 			//本属性长度（包含属性值）
+	BOOLEAN Nonresident;			//本属性是不是驻留属性 0x00=Resident, 0x01 = NonResident
+	UCHAR NameLength;				//属性名的名称长度
+	USHORT NameOffset;				//属性名偏移
+	USHORT Flags;	 				// 0x00FF=compressed  0x4000=encrypted  0x8000=Sparse
+	USHORT AttributeID;
 }ATTRIBUTE, *PATTRIBUTE;
 
 
 typedef struct {
 	ATTRIBUTE Attribute;
-	ULONG ValueLength; //属性值长度   
-	USHORT ValueOffset; //属性值偏移   
-	USHORT Flags; // 索引标志 0x0001 = Indexed   
+	ULONG ContentLength; 		//属性值长度   
+	USHORT ContentOffset; 	//属性值偏移   
+//	USHORT Flags; 			// 索引标志 0x0001 = Indexed 和结构图里描述不一致，结构图中为unused  
+	USHORT unused;
 } RESIDENT_ATTRIBUTE, *PRESIDENT_ATTRIBUTE;
 
 
+
+// 这个结构的定义和图片里结构的描述不一致
+// TODO
 typedef struct {
 	ATTRIBUTE Attribute;
 	ULONGLONG LowVcn;
@@ -124,44 +131,31 @@ typedef struct {
 } NONRESIDENT_ATTRIBUTE, *PNONRESIDENT_ATTRIBUTE;
 
 
-typedef struct {
-	ULONGLONG CreationTime;
-	ULONGLONG ChangeTime;
-	ULONGLONG LastWriteTime;
-	ULONGLONG LastAccessTime;
-	ULONG FileAttributes;
-	ULONG AlignmentOrReservedOrUnknown[3];
-	ULONG QuotaId;                // NTFS 3.0
-	ULONG SecurityId;       // NTFS 3.0
-	ULONGLONG QuotaCharge;  // NTFS 3.0
-	USN Usn;                      // NTFS 3.0
-} STANDARD_INFORMATION, *PSTANDARD_INFORMATION;
-
 
 typedef struct {
-	ATTRIBUTE_TYPE AttributeType;
-	USHORT Length;
-	UCHAR NameLength;
-	UCHAR NameOffset;
-	ULONGLONG LowVcn;
-	ULONGLONG FileReferenceNumber;
-	USHORT AttributeNumber;
+	ATTRIBUTE_TYPE AttributeType; 			//属性类型
+	USHORT Length;							//本记录长度
+	UCHAR NameLength;						//属性名长度
+	UCHAR NameOffset;						//属性名偏移
+	ULONGLONG LowVcn;						//起始VCN
+	ULONGLONG FileReferenceNumber;			//属性的文件参考号
+	USHORT AttributeNumber;					//标识
 	USHORT AlignmentOrReserved[3];
 } ATTRIBUTE_LIST, *PATTRIBUTE_LIST;
 
 
 typedef struct { //文件名属性的值区域   
-	ULONGLONG DirectoryFileReferenceNumber; //父目录的FRN   
-	ULONGLONG CreationTime;
-	ULONGLONG ChangeTime;
-	ULONGLONG LastWriteTime; // 最后一次MFT更新时间   
-	ULONGLONG LastAccessTime;
-	ULONGLONG AllocatedSize; // 未明   
-	ULONGLONG DataSize; // 偶尔与文件大小GetFileSize不同   
-	ULONG FileAttributes;
-	ULONG AlignmentOrReserved;
+	ULONGLONG DirectoryFileReferenceNumber; 	// Parent Directory 父目录的FRN   
+	ULONGLONG CreateTime;						// Date Created
+	ULONGLONG ModifiedTime;						// Date Modified
+	ULONGLONG LastWriteTime; 					// Date MFT Mofified最后一次MFT更新时间   
+	ULONGLONG LastAccessTime;					// Date Accessed
+	ULONGLONG LogicalFileSize; 					// Logical File Size   
+	ULONGLONG SizeOnDisk; 						//    
+	ULONG Flags;
+	ULONG ReparseValue;
 	UCHAR NameLength;
-	UCHAR NameType; // 0x0  WIN32 0x01  DOS 0x02  WIN32&DOS 0x3   
+	UCHAR NameType; 							// 0x0  WIN32 0x01  DOS 0x02  WIN32&DOS 0x3   
 	WCHAR Name[1];
 } FILENAME_ATTRIBUTE, *PFILENAME_ATTRIBUTE;
 
@@ -215,9 +209,6 @@ typedef struct {
 
 
 #pragma pack(push,1)   
-/* 该结构体当中定义的是NTFS的Boot Sector结构
- * 
- */
 typedef struct { //512B   
 	UCHAR Jump[3];			//跳过3个字节   
 	UCHAR Format[8]; 		//‘N’'T' 'F' 'S' 0x20 0x20 0x20 0x20   
@@ -236,7 +227,8 @@ typedef struct { //512B
 	ULONGLONG TotalSectors;	//该分区总扇区数   
 	ULONGLONG MftStartLcn;	//MFT表的起始簇号LCN   
 	ULONGLONG Mft2StartLcn;	//MFT备份表的起始簇号LCN   
-	ULONG ClustersPerFileRecord;//每个MFT记录包含几个簇  记录的字节不一定为：ClustersPerFileRecord*SectorsPerCluster*BytesPerSector  
+	ULONG ClustersPerFileRecord;//每个MFT记录包含几个簇  
+	//记录的字节不一定为：ClustersPerFileRecord*SectorsPerCluster*BytesPerSector  
 	ULONG ClustersPerIndexBlock;//每个索引块的簇数   
 	LARGE_INTEGER VolumeSerialNumber;//卷序列号   
 	UCHAR Code[0x1AE];
@@ -250,75 +242,62 @@ typedef struct { //512B
 
 
 
-#if 0
-struct MY_USN_RECORD{
-	DWORDLONG FileReferenceNumber;			//文件引用数
-	DWORDLONG ParentFileReferenceNumber;	//父文件引用树
-	LARGE_INTEGER TimeStamp;				//时间
-	DWORD Reason;							//原因
-	WCHAR FileName[MAX_PATH];
-};
 
 
-typedef struct{
-	DWORD RecordLength;					//该条USN记录长度
-	WORD   MajorVersion;                //主版本
-	WORD   MinorVersion;                //次版本
-	DWORDLONG FileReferenceNumber;		//文件引用数
-	DWORDLONG ParentFileReferenceNumber;//父文件引用数
-	USN Usn;							//USN（一般为int64类型）
-	LARGE_INTEGER TimeStamp;            //时间戳
-	DWORD Reason;						//原因
-	DWORD SourceInfo;					//源信息
-	DWORD SecurityId;					//安全
-	DWORD FileAttributes;               //文件属性（文件或目录）
-	WORD   FileNameLength;				//文件名长度
-	WORD   FileNameOffset;              //文件名偏移量
-	WCHAR FileName[1];					//文件名第一位的指针
-} USN_RECORD, *PUSN_RECORD;
+/* 
+// 和图片描述中定义的不一样
+typedef struct {
+	ULONGLONG CreationTime;		// Date created
+	ULONGLONG ModifiedTime;		// Date Modified
+	ULONGLONG LastWriteTime;	// Date MFT record modified
+	ULONGLONG LastAccessTime;	// Date Accessed
+	ULONG FileAttributes;
+	ULONG AlignmentOrReservedOrUnknown[3];
+	ULONG QuotaId;                // NTFS 3.0
+	ULONG SecurityId;       // NTFS 3.0
+	ULONGLONG QuotaCharge;  // NTFS 3.0
+	USN Usn;                      // NTFS 3.0
+} STANDARD_INFORMATION, *PSTANDARD_INFORMATION;
 
-
-typedef struct{
-	DWORDLONG UsnJournalID;				//USN日志ID
-	USN FirstUsn;						//第一条USN记录的位置
-	USN NextUsn;						//下一条USN记录将要写入的位置
-	USN LowestValidUsn;					//最小的有效的USN（FistUSN小于该值）
-	USN MaxUsn;							//USN最大值
-	DWORDLONG MaximumSize;				//USN日志最大大小（按Byte算）
-	DWORDLONG AllocationDelta;			//USN日志每次创建和释放的内存字节数
-} USN_JOURNAL_DATA, *PUSN_JOURNAL_DATA;
-
-
-
-typedef struct{
-	DWORDLONG StartFileReferenceNumber;	//开始文件引用数，第一次调用必须为0
-	USN LowUsn;							//最小USN，第一次调用，最好为0
-	USN HighUsn;						//最大USN
-} MFT_ENUM_DATA, *PMFT_ENUM_DATA;
-
-
-typedef struct{
-	USN StartUsn;						//变更的USN记录开始位置，即第一次读取USN日志的LastUsn值。
-	DWORD ReasonMask;					//原因标识
-	DWORD ReturnOnlyOnClose;			//只有在记录关闭时才返回
-	DWORDLONG Timeout;					//延迟时间
-	DWORDLONG BytesToWaitFor;			//当USN日志大小大于该值时返回
-	DWORDLONG UsnJournalID;				//USN日志ID
-} READ_USN_JOURNAL_DATA, *PREAD_USN_JOURNAL_DATA;
-
-
-typedef struct{
-	DWORDLONG MaximumSize;				//NTFS文件系统分配给USN日志的最大大小（字节）
-	DWORDLONG AllocationDelta;			//USN日志每次创建和释放的内存字节数
-} CREATE_USN_JOURNAL_DATA, *PCREATE_USN_JOURNAL_DATA;
-
-
-typedef struct{
-	DWORDLONG UsnJournalID;				//USN日志ID
-	DWORD DeleteFlags;					//删除标志
-} DELETE_USN_JOURNAL_DATA, *PDELETE_USN_JOURNAL_DATA;
-#endif // if 0
+// 按图片中的描述定义如下
+typedef enum{
+	ReadOnly = 0x0001,
+	Hidden 	= 0x0002,
+	System 	= 0x0004,
+	res1   	= 0x0008,
+	res2 	= 0x0010,
+	Archive	= 0x0020,
+	Device 	= 0x0040,
+	Normal 	= 0x0080,
+	Temporary = 0x0100,
+	SparseFile = 0x0200,
+	ReparsePoint = 0x0400,
+	Compressed 	= 0x0800,
+	Offline 	= 0x1000,
+	NotIndex = 0x2000,
+	Encrypted = 0x4000,
+	res3 = 0x8000
+}FileNameANDStdInfoTYPE
 
 
 
+typedef struct {
+	ULONGLONG CreationTime;		// Date created
+	ULONGLONG ModifiedTime;		// Date Modified
+	ULONGLONG LastWriteTime;	// Date MFT record modified
+	ULONGLONG LastAccessTime;	// Date Accessed
+	ULONG Flags;
+	ULONG MaxVersions;
+	ULONG VersionNum;
+	ULONG ClassID;
+	ULONG OwerID;
+	ULONG SecurityId;       // NTFS 3.0
+	ULONGLONG QuotaCharge;  // NTFS 3.0
+	USN Usn;                // NTFS 3.0  Update Sequence Number(USN)
+	ULONGLONG Unused;
+} STANDARD_INFORMATION, *PSTANDARD_INFORMATION;
+
+
+*/
+	
 #endif	// NTFS_H_INCLUDED
