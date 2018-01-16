@@ -504,6 +504,63 @@ bool ReadDisk(unsigned char *&out, DWORD start, DWORD size)
 
 
 
+
+
+## [Master Boot Record](https://technet.microsoft.com/en-us/library/cc976786.aspx)
+
+​	The MBR, the most important data structure on the disk, is created when the disk is partitioned.  The MBR contains a small amount of executable code called the master boot code,the disk signature, and the partition table for the disk.At the end of the MBR is a 2-byte structure called a signature word or end of sector marker, which is always set to 0x55AA. A signature word also marks the end of an extended boot record (EBR) and the boot sector.
+
+The disk signature, a unique number at offset 0x01B8, identifies the disk to the operating system. Windows 2000 uses the disk signature as an index to store and retrieve information about the disk in the registry subkey:
+
+`HKEY_LOCAL_MACHINE\SYSTEM\MountedDevices`
+
+### Master Boot Code
+
+The master boot code performs the following activities:
+
+1. Scans the partition table for the active partition.
+2. Finds the starting sector of the active partition.
+3. Loads a copy of the boot sector from the active partition into memory.
+4. Transfers control to the executable code in the boot sector.
+
+If the master boot code cannot complete these functions, the system displays one of the following error messages:
+
+- Invalid partition table
+- Error loading operating system
+- Missing operating system
+
+![DiskDataStructure](http://img.blog.csdn.net/20180116194000274?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+
+
+![这里写图片描述](http://img.blog.csdn.net/20180116194158099?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+
+
+
+
+### Partition Table
+
+​	The partition table, a 64-byte data structure used to identify the type and location of partitions on a hard disk, conforms to a standard layout independent of the operating system. Each partition table entry is 16 bytes long, with a maximum of four entries. Each entry starts at a 
+predetermined offset from the beginning of the sector, as follows:
+
+- Partition 1\ 0x01BE(446)
+- Partition 2\ 0x01CE(462)
+- Partition 3\ 0x01DE(478)
+- Partition 4\ 0x01EE(494)
+
+
+
+## [Recovering Data with NTFS](https://technet.microsoft.com/en-us/library/cc976815.aspx)          
+
+
+
+
+
+
+
+
+
 ## NFTS 系统中查找文件的流程
 
 1. 从BootSector中读出文件所在的磁盘的MFT起始簇
