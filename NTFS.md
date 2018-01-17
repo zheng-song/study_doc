@@ -624,6 +624,47 @@ ntfs.h头文件中的内容包含的是文件系统当中的一些结构体的�
 
 
 
+## MFT 布局
+
+​	MFT的每条记录都包含一个头部和一个或多个属性（按属性ID升序），并以四个字节的0xFFFFFFFF结束
+
+![MFT布局](http://img.blog.csdn.net/20180117201032032?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+
+
+### MFT FILE RECORD
+
+![MFT](http://img.blog.csdn.net/20180117194726094?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+```
+/* NTFS RECORD HEADER */
+typedef struct {
+	ULONG Type;              // NTFS记录的类型，FILE/BAAD/INDX/CHKD/HOLE
+	USHORT UsaOffset;        // Update Sequence Array 在该结构中的偏移量
+	USHORT UsaCount;         // Size in words of the Update Sequence (S)
+	USN Usn;       // Update Sequence Number of the record, $LogFile sequence number
+} NTFS_RECORD_HEADER, *PNTFS_RECORD_HEADER;  // 16 bytes
+
+/* FILE RECORD_HEADER */
+typedef struct {
+	NTFS_RECORD_HEADER Ntfs;       // when Type = FILE
+	USHORT SequenceNumber;         // MFT entry 被重用次数 
+	USHORT LinkCount;              // The number of directory links to the MFT entry
+	USHORT AttributesOffset;       // 第一个属性在此 MFT entry 中的偏移
+	USHORT Flags;                  // 0x0001 = InUse, 0x0002 = Directory
+	ULONG BytesInUse;              // 已被该 MFT entry 使用的字节数
+	ULONG BytesAllocated;          // 分配给该 MFT entry 的字节数
+	ULONGLONG BaseFileRecord; /*If the MFT entry contains attributes that overflowed a base MFT entry, this member contains the file reference number of the base entry; otherwise , it contains zero.*/
+	USHORT NextAttributeNumber;    // number assigned to next attribute
+} FILE_RECORD_HEADER, *PFILE_RECORD_HEADER;  // 42 bytes
+```
+
+
+
+
+
+
+
 ### MFT Entry Attribute
 
 ![MFTEntryAttribut](http://img.blog.csdn.net/20180112190513952?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
