@@ -222,7 +222,7 @@ typedef struct { //512B
 	USHORT Mbz3;			//总为0   
 	USHORT SectorsPerTrack;	//每道扇区数，一般为0x3f   
 	USHORT NumberOfHeads;	//磁头数   
-	ULONG PartitionOffset;	//该分区的便宜（即该分区前的隐含扇区数 一般为磁道扇区数0x3f 63）   
+	ULONG PartitionOffset;	//该分区的偏移（即该分区前的隐含扇区数 一般为磁道扇区数0x3f 63）   
 	ULONG Reserved2[2];
 	ULONGLONG TotalSectors;	//该分区总扇区数   
 	ULONGLONG MftStartLcn;	//MFT表的起始簇号LCN   
