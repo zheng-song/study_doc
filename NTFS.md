@@ -612,15 +612,7 @@ predetermined offset from the beginning of the sector, as follows:
 
 ntfs.h头文件中的内容包含的是文件系统当中的一些结构体的定义。
 
-### [Boot Sector](https://technet.microsoft.com/en-us/library/cc976796.aspx)
-
-​	The boot sector, located at sector 1 of each volume, is a critical disk structure for starting your computer. It contains executable code and data required by the code, including information that the file system uses to access the volume. The boot sector is created when you format a volume. At the end of the boot sector is a two-byte structure called a signature word or end of sector marker, which is always set to 0x55AA. On computers running Windows 2000, the boot sector on the active partition loads into memory and starts Ntldr, which loads the operating system.
-
-![NTFSBootSector.png](http://upload-images.jianshu.io/upload_images/6128001-4e9ea324df41ba3c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-- res means reserved, note that the terms reserved,unused and 0x00 are specified by Microsoft, the difference between reserved and unused is not specified. However it should be noted that the blocks specified as all zeros have defined meaning within FAT boot sectors
-
-![BootSector](http://img.blog.csdn.net/20180112174614019?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+​	
 
 
 
@@ -634,38 +626,16 @@ ntfs.h头文件中的内容包含的是文件系统当中的一些结构体的�
 
 ### MFT FILE RECORD
 
-![MFT](http://img.blog.csdn.net/20180117194726094?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
-
-```
-/* NTFS RECORD HEADER */
-typedef struct {
-	ULONG Type;              // NTFS记录的类型，FILE/BAAD/INDX/CHKD/HOLE
-	USHORT UsaOffset;        // Update Sequence Array 在该结构中的偏移量
-	USHORT UsaCount;         // Size in words of the Update Sequence (S)
-	USN Usn;       // Update Sequence Number of the record, $LogFile sequence number
-} NTFS_RECORD_HEADER, *PNTFS_RECORD_HEADER;  // 16 bytes
-
-/* FILE RECORD_HEADER */
-typedef struct {
-	NTFS_RECORD_HEADER Ntfs;       // when Type = FILE
-	USHORT SequenceNumber;         // MFT entry 被重用次数 
-	USHORT LinkCount;              // The number of directory links to the MFT entry
-	USHORT AttributesOffset;       // 第一个属性在此 MFT entry 中的偏移
-	USHORT Flags;                  // 0x0001 = InUse, 0x0002 = Directory
-	ULONG BytesInUse;              // 已被该 MFT entry 使用的字节数
-	ULONG BytesAllocated;          // 分配给该 MFT entry 的字节数
-	ULONGLONG BaseFileRecord; /*If the MFT entry contains attributes that overflowed a base MFT entry, this member contains the file reference number of the base entry; otherwise , it contains zero.*/
-	USHORT NextAttributeNumber;    // number assigned to next attribute
-} FILE_RECORD_HEADER, *PFILE_RECORD_HEADER;  // 42 bytes
-```
-
-
-
-
-
 
 
 ### MFT Entry Attribute
+
+​	在NTFS中，所有与数据相关的信息都称为“属性”，NTFS与其他文件系统最大的不同之处在于，大多数文件系统是对文件的内容进行读写，而NTFS则是对包含文件内容的属性进行读写。
+
+在数据结构中，属性又可以分为长驻属性和非常驻属性：
+
+1. **常驻属性：** 有的属性其属性内容很小，它的MFT项可以容纳下它的全部内容，为了节约空间，系统会直接将其存放在MFT项中，而不再为其另外分配簇空间，这样的属性称为常驻属性
+2. **非常驻属性：** 非常驻属性是指那些内容较大，无法完全存放在其MFT项中的属性。如文件的数据属性，通常内容很大，需要在MFT之外另为其分配足够的簇空间进行存储，这样的属性就是非长驻属性。
 
 ![MFTEntryAttribut](http://img.blog.csdn.net/20180112190513952?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
@@ -690,4 +660,200 @@ typedef enum {
 	AttributeEnd = 0xFFFFFFFF
 } ATTRIBUTE_TYPE, *PATTRIBUTE_TYPE;
 ```
+
+
+
+
+
+
+
+## 对于NTFS 文件系统的研究
+
+​	NTFS分区的最开始的16个扇区是分区引导扇区，用于保存分区引导代码，接下来是主文件表(MFT),如果MFT所在的磁盘扇区出现损坏，NTFS文件系统会将MFT转移到到硬盘的其他扇区，这样就保证了NTFS文件系统和Windows操作系统的正常运行。比之先前的FAT16和FAT32文件系统的FAT(文件分配表)，FAT只能固定在分区引导扇区的后面，一旦该扇区，整个文件系统就会瘫痪，NTFS文件系统显然要先进的多了。不过这种移动MFT的做法却也并非十全十美，如果分区引导代码中指向MFT的部分出现错误，那么NTFS文件系统便会不知道到哪里寻找MFT ，从而会报告“磁盘没有格式化”这样的错误信息。为了避免这样的问题发生，分区引导代码中会包含一段校验程序，专门负责侦错。
+
+​	一个NTFS文件系统大致上可以分为
+
+- 引导区: 引导区部分包括DBR(DOS BOOT RECORD)和引导代码，一般系统为其分配16个扇区，未完全使用。
+- MFT区:   文件系统中出现一个“MFT”区，这个“MFT区”是一个连续的簇空间，除非其他空间已全部被分配使用，否则不会在此空间中存储用户文件或目录。在WINXP下创建的NTFS，其MFT通常距离引导扇区较远，但在WIN2000下创建的NTFS，其MFT通常起始于4号簇位置。
+- MFT备份区：由于MFT备份的重要性，在文件系统的中部为其保存了一个备份，不过这个备份很小，只是MFT前几个项的备份。
+- 数据区：用户数据
+- DBR备份扇区： 在卷的最后一个扇区，保存了一份DBR扇区的备份。这个扇区包含在分区表描述的该分区大小中，但却不在DBR描述的文件系统大小范围之内。DBR描述文件系统大小时，总是比分区表描述的扇区数小1个扇区。
+
+因为NTFS将所有的数据都视为文件，理论上除了引导扇区必须位于第一个扇区以外，NTFS卷可以在任意的位置存放任意的文件，但是通常都会遵循一定的布局。
+
+### NTFS的特点
+
+- NTFS与FAT文件系统一样，也是用**簇**作为数据的存取的最小单位。但是因为他将所有的数据，包括文件系统管理数据也做为文件进行管理，所以NTFS文件系统中的所有扇区都被分配以簇号，并以0开始对所有的簇进行编号，文件系统的0号扇区为0号簇的起始位置。
+- 它的可升级性基于使用常规结构对特殊数据结构进行管理。在NTFS文件系统将所有的数据都视为文件，通常在其他文件系统中被隐藏的管理数据在NTFS中也被存储在文件中，文件系统管理数据可以像普通文件一样被存放在文件系统内任何位置。
+
+### NTFS 元文件
+
+​	NTFS文件系统被创建时，会同时建立一些重要的系统信息。这些系统信息也全是以文件的形式存在，被称为元文件。元文件的文件名都以“ $”符号开头，表示其为隐藏的系统文件，用户不可直接访问。
+
+NTFS的元文件总共有17个，其具体的含义如下：
+
+- **$MFT:** 它其实是整个主文件表，也就是将整个MFT看做一个文件。
+- **$MFTMirr:** MFT前几个MFT项的备份，NTFS也将其作为一个文件看待。
+- **$LogFile:** 日志文件。
+- **$Volume:** 卷文件，包含有卷标和其他的版本信息。
+- **$AttDef:** 属性定义列表，定义每种属性的名字和类型。
+- **$Root:** 根目录文件
+- **$Bitmap:** 位图文件，它的数据属性的每一个bit对应文件系统中的一个簇，用以描述簇的分配情况。
+- **$Boot：** 引导文件，DBR扇区就是引导文件的第一个扇区。
+- **$BadClus：** 坏簇记录文件。
+- **$Quota：** 早期的NT系统中记录磁盘配额信息。
+- **$Secure：** 安全文件。
+- **$UpCase:** 大小写字符转换表文件。
+- **$Extend metadata directory:** 扩展元数据目录。
+- **$Extend\$Reparse：** 重解析点文件.
+- **$Extend\$UsnJrnl：** 变更日志文件。
+- **$Extend\$Quota:** 配额管理文件。
+- **$Extend\$ObjId：**对象ID文件。
+
+
+
+### DBR (DOS BOOT RECORD)的作用
+
+​	NTFS的引导扇区也位于文件系统的0号扇区，这是它与FAT文件系统在布局上的唯一相同之处。
+
+​	DBR（DOS BOOT RECORD，DOS引导记录），位于柱面0，磁头1，扇区1，即逻辑扇区0。DBR分为两部分：DOS引导程序和BPB（BIOS参数块）。其中DOS引导程序完成DOS系统文件（IO.SYS，MSDOS.SYS）的定位与装载，而BPB用来描述本DOS分区的磁盘信息，**PB位于DBR偏移0BH处，共13字节。** 它包含逻辑格式化时使用的参数，可供DOS计算磁盘上的文件分配表，目录区和数据区的起始地址，BPB之后三个字提供物理格式化（低格）时采用的一些参数。引导程序或设备驱动程序根据这些信息将磁盘逻辑地址（DOS扇区号）转换成物理地址（绝对扇区号）。
+
+### [Boot Sector](https://technet.microsoft.com/en-us/library/cc976796.aspx)
+
+​	The boot sector, located at sector 1 of each volume, is a critical disk structure for starting your computer. It contains executable code and data required by the code, including information that the file system uses to access the volume. The boot sector is created when you format a volume. At the end of the boot sector is a two-byte structure called a signature word or end of sector marker, which is always set to 0x55AA. On computers running Windows 2000, the boot sector on the active partition loads into memory and starts Ntldr, which loads the operating system.
+
+![NTFSBootSector.png](http://upload-images.jianshu.io/upload_images/6128001-4e9ea324df41ba3c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+- res means reserved, note that the terms reserved,unused and 0x00 are specified by Microsoft, the difference between reserved and unused is not specified. However it should be noted that the blocks specified as all zeros have defined meaning within FAT boot sectors
+
+```C++
+#pragma pack(push,1)   
+typedef struct { //512B   
+	UCHAR Jump[3];			//跳过3个字节   
+	UCHAR Format[8]; 		//‘N’'T' 'F' 'S' 0x20 0x20 0x20 0x20   
+	USHORT BytesPerSector;	//每扇区有多少字节 一般为512B 0x200   
+	UCHAR SectorsPerCluster;//每簇有多少个扇区
+  	USHORT res;				//保留扇区数   
+	UCHAR Mbz1;				//保留0   
+	USHORT Mbz2;			//保留0   
+	USHORT Reserved1;		//保留0   
+	UCHAR MediaType;		//介质描述符，硬盘为0xf8   
+	USHORT Mbz3;			//总为0   
+	USHORT SectorsPerTrack;	//每磁道的扇区数，一般为0x3f(不检查此项)   
+	USHORT NumberOfHeads;	//每柱面磁头数(不检查此项)   
+	ULONG PartitionOffset;	//该分区的偏移（即该分区前的隐含扇区数 一般为磁道扇区数0x3f 63，不检查此项）   
+	ULONG Reserved2[2];		//总是80008000(不检查此项)
+	ULONGLONG TotalSectors;	//该分区总共的扇区数  
+	ULONGLONG MftStartLcn;	//MFT表的起始簇号LCN
+	ULONGLONG Mft2StartLcn;	//MFT备份表的起始簇号LCN
+	ULONG ClustersPerFileRecord;//每个MFT记录包含几个簇  
+	//记录的字节不一定为：ClustersPerFileRecord*SectorsPerCluster*BytesPerSector  
+	ULONG ClustersPerIndexBlock;//每个索引块的簇数
+	LARGE_INTEGER VolumeSerialNumber;//卷序列号   
+	UCHAR Code[0x1AE]; 		//包含校验码和引导代码。
+	USHORT BootSignature;	//签名55AA标记
+} BOOT_BLOCK, *PBOOT_BLOCK;
+#pragma pack(pop) 
+```
+
+​	以上引导扇区最为关键的字节数是0B-0C（每扇区字节数） 0B-0C（每扇区字节数） 0D（每簇扇区数）28-2F（文件系统扇区总和） 30-37（MFT起始簇号）38-3F（MFT备份的起始簇号） 40（每MFT项大小）44（每个索引的簇数），但数据发生不可预料的损坏时，可以根据以上信息重建分区表，定位数据区，恢复MFT，重建DBR，这些关键字节码的用处不言而喻。
+
+```C++
+//计算每个MFT表项所占用的Byte数	
+BytesPerFileRecord = bootb.ClustersPerFileRecord < 0x80
+		? bootb.ClustersPerFileRecord*bootb.SectorsPerCluster*bootb.BytesPerSector
+		: 1 << (0x100 - bootb.ClustersPerFileRecord);
+```
+
+
+
+### MFT(Master File Record)
+
+​	格式化成NTFS文件系统时，就是在其中建立了一个主文件表MFT，其中包含16个元文件的文件记录。为了尽可能减少$MFT文件产生碎片的可能性，系统预先为其预先为其预留整个文件系统大约12.5%的空间。只有在用户数据区的空间用尽时，才会临时让出MFT区的部分空间存储数据，但一旦数据区有了足够的空间，就会立即收回原来让出的MFT空间。MFT是NTFS文件系统的核心，MFT由一个个的MFT项(也称为文件记录)组成，其中用各种属性记录着该文件或目录的各种信息。每个MFT项实际的大小在引导扇区中进行说明，Microsoft的所有版本都使用1024字节的大小。前部为一个包含几十个字节的具有固定的大小和结构的MFT头，剩余的字节为属性列表，用于存放各种属性。**每一个文件和目录的信息都包含在MFT当中**，每一个目录和文件在表中至少有一个MFT项，除了引导扇区以外，访问其他的任何一个前都需要先访问MFT，在MFT中找到该文件的MFT项，根据MFT项中记录的信息找到文件内容并对其进行访问。
+
+#### MFT的基本特点
+
+- MFT的第一个区域是签名，所有的MFT项都有相同的签名（FILE）。如果在项中发现错误，可能将其改写成“BAAD”的字样。
+- MFT项还有一个标志域用以说明该项是一个文件项还是目录项，以及它的分配状态。MFT的分配状态也在一个$BITMAP属性文件中进行描述。
+- 每个MFT项占用两个扇区，每个扇区的结束两个字节都有一个修正值，这个修正值与MFT项的更新序列号相同，如果发现不同，会认为该MFT项存在错误。
+- 如果一个文件的属性较多，使用一个MFT项无法容纳下全部的属性，可以使用多个MFT项，第一个项被称为基本文件记录或基本MFT项。
+
+![MFT](http://img.blog.csdn.net/20180117194726094?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+```
+/* NTFS RECORD HEADER */
+typedef struct {
+	ULONG Type;              // NTFS记录的类型，FILE(46494C45)/BAAD/INDX/CHKD/HOLE
+	USHORT UsaOffset;        // Update Sequence Array：更新序列号偏移
+	USHORT UsaCount;         // 更新序列号的数组个数，通常为3
+	USN Usn;       // 日志序列号(LSN)
+} NTFS_RECORD_HEADER, *PNTFS_RECORD_HEADER;  // 16 bytes
+
+/* FILE RECORD_HEADER */
+typedef struct {
+	NTFS_RECORD_HEADER Ntfs;       // when Type = FILE
+	USHORT SequenceNumber;         // MFT entry 被重用次数 
+	USHORT LinkCount;              // 硬链接数
+	USHORT AttributesOffset;       // 第一个属性在此 MFT entry 中的偏移
+	USHORT Flags;                  // 0x0000=deleted file; 0x0001=file, 0x0002=deleted dir; 0x0003= dir;
+	ULONG BytesInUse;              // MFT项的逻辑长度(已被该 MFT entry 使用的字节数,即已使用的空间)
+	ULONG BytesAllocated;          // MFT的物理长度(分配给该 MFT entry 的字节数，即总共的空间)
+	ULONGLONG BaseFileRecord; /*基本文件记录索引号， If the MFT entry contains attributes that overflowed a base MFT entry, this member contains the file reference number of the base entry; otherwise , it contains zero.*/
+	USHORT NextAttributeNumber;    // 下一属性ID number assigned to next attribute
+	UCHAR border[2];			   // 边界
+	ULONG MFTRecordNo;			   // MFT记录编号(起始编号0)
+	ULONGLONG updateSeqArr;		   // 更新序列号数组
+	ULONGLONG Reserved;			   // 属性和修正值
+} FILE_RECORD_HEADER, *PFILE_RECORD_HEADER;  // 42 bytes
+```
+
+
+
+
+
+
+
+### NTFS 中建立文件的过程
+
+​	假设我们要加里一个文件“\子目录1\file.txt”,假设子目录1已经存在于根目录下。要建立的文件的大小为7000个字节，每一个簇的大小为4096个字节。
+
+1. 读取文件系统的第一个扇区的引导扇区，获取簇的大小， MFT的起始位置以及每一个MFT项的大小。
+2. 读取第一个MFT项，即\$MFT文件的MFT项，由他的\$DATA属性获取其他的MFT的位置。
+3. 首先为准备新建的文件建立MFT项----访问\$MFT文件的\$BITMAP属性，找到一个未分配的项，假设一个空闲项为400号，把它分配给新文件，并将$BITMAP中的相应的位置设置为1。
+4. 初始化MFT项----跳转到400号MFT项的位置，将其中的内容删除。建立标准的信息属性(\$STANDARD_INFORMATION)和文件名属性(\$FILE_NAME),时间设置为当前时间，在MFT项头当中设置使用中标志
+5. 下面需要从使用6号MFT项的\$BITMAP文件中为文件的\$DATA属性寻找并分配两个簇，因为文件需要两个簇的空间。使用最佳分配策略找到两个连续的空闲簇722和723号簇，并将其相应的bit位设置为1，将文件的内容写入到簇中，更新\$DATA属性中的簇地址。 修改了MFT项，所以更新文件的最后修改时间。
+6. 下一步为其添加文件名项。访问5号MFT项的根目录，定位`子目录1`， 读取索引根属性(\$INDEX_ROOT)和索引分配属性(\$INDEX_ALLOCATION),在倒置树中分类寻找，找到`子目录1`的索引项，它的MFT项的地址为200,更新目录的最后访问时间。 
+7. 跳转到200号的MFT项，访问它的索引根属性(\$INDEX_ROOT)，寻找将为file.txt分配的空间。为其建立一个新的索引。重新对倒置树进行分类，新索引项的文件参考号地址是400号MFT项。设置相应的时间值和标志。更新目录的最后写入、修改、访问时间。
+8. 在前面的每一步当中，在文件系统日志当中建立项并将改变记入\\$Extend\\\$UsrJrnl。如果设置了配额管理，新文件的大小将会记录到用户的配额当中(\\\$Extend\\\$Quota)。
+
+FAT文件系统在读文件时，操作系统从目录区中读取文件的相关信息(包括文件名、后缀名、文件大小、修改日期和文件在数据区保存的第一个簇的簇号)，我们这里假设第一个簇号是0023.那么操作系统将会从0023簇读取相应的数据，然后再找到FAT的0023单元。如果内容是文件的结束标志(FF)，那么表示文件结束，否则内容保存下一个簇的簇号，这样重复下去直到遇到文件结束标志。
+
+> **簇:** 由于物理磁盘中扇区是磁盘的最小物理存储单元、在硬盘中存在的量很大并且每一个扇区都应该有编号，所以操作系统无法对数目众多的扇区进行寻址。因此操作系统将相邻的扇区组合在一起，组成簇这一单位用以高效的利用资源。文件系统是操作系统与硬盘驱动器之间的接口，当系统请求从硬盘中读取一个资源时，会请求相应的文件系统打开文件。**簇包含的扇区数是由文件系统格式与分配单元大小而定的，一般每一个簇可以包括2、4、8、16、32或64个扇区。**
+>
+> **扇区**: 磁盘的每一面被分为很多条磁道，即表面上的一些同心圆，越接近中心，圆就越小。而每一个磁道又按512个字节为单位划分为等分，叫做扇区，在一些硬盘的参数列表上你可以看到描述每个磁道的扇区数的参数，它通常用一个范围标识，例如373～746，这表示，最外圈的磁道有746个扇区，而最里面的磁道有373个扇区。
+
+
+
+
+
+
+
+
+
+## NTFS中删除文件的过程
+
+​	下面是删除"\子目录1\file.txt"文件的过程。
+
+1. 读取文件系统的第一个扇区的引导扇区，获取簇的大小，MFT的起始位置、每一个MFT项的大小等等。
+2. 读取\$MFT文件的第一项，通过它的\$DATA属性得到其他的MFT位置。
+3. 访问5号MFT项，即根目录通过索引根属性(\$INDEX_ROOT)和索引分配属性(\$INDEX_ALLOCATION)找到`子目录1`项，它的MFT项为200，更新目录的最后访问时间。
+4. 访问200号MFT项的索引根属性(\$INDEX_ROOT)并寻找file.txt的条目，找到它的MFT项为400号。
+5. 从索引中移除文件的项，移动节点中的项覆盖了原来的项，更新目录的最后写入时间、最后修改时间、最后访问时间。
+6. 通过取消使用中标志取消400号MFT的分配。访问\$Bitmap文件的\$DATA属性，将该项的相应位置设置为0。
+7. 访问400号MFT项的非常驻属性，从\$DATA属性中得到数据内容所在的簇号，并将\$Bitmap中的文件相应簇的bit设置为0,即取消对722、723号簇的分配。
+8. 前面的每一步都将在文件系统日志\$Logfile中产生项并将改变记录到\\\$Extend\\\$UsrJrnl。如果设置了磁盘配额管理，将在\\\$Extend\\\$Quota中，把回收的内容从用户已经使用的磁盘空间中减去。
+
+
+
+
 

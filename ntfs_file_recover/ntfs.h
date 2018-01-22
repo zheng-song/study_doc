@@ -213,9 +213,9 @@ typedef struct { //512B
 	UCHAR Jump[3];			//跳过3个字节   
 	UCHAR Format[8]; 		//‘N’'T' 'F' 'S' 0x20 0x20 0x20 0x20   
 	USHORT BytesPerSector;	//每扇区有多少字节 一般为512B 0x200   
-	UCHAR SectorsPerCluster;//每簇有多少个扇区   
-	USHORT BootSectors;		//   
-	UCHAR Mbz1;				//保留0   
+	UCHAR SectorsPerCluster;//每簇有多少个扇区
+	USHORT res; 			//保留
+	UCHAR Mbz1;				//保留0
 	USHORT Mbz2;			//保留0   
 	USHORT Reserved1;		//保留0   
 	UCHAR MediaType;		//介质描述符，硬盘为0xf8   
