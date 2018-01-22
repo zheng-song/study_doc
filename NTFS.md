@@ -368,10 +368,6 @@ logged utility stream属性包含创建者选择的所有的属性数据，但�
 
 
 
-
-
-
-
 ### Special Files
 
 MFT中最开始的十六个条目被用来保存特殊文件，NTFS3.0只使用最开始的20个条目。
@@ -402,106 +398,6 @@ MFT中最开始的十六个条目被用来保存特殊文件，NTFS3.0只使用�
 - \\$Bitmap(entry 6): The data attribute of \$Bitmap is a bitmap of the allocated clusters on the volume.
 
 - \\$Boot(entry 7): \\Boot的第一部分同样也是volume的一部分。
-
-
-
-
-
-
-// ConsoleApplication1.cpp: 定义控制台应用程序的入口点。
-//
-
-```C++
-#include "stdafx.h"
-#include <Windows.h>
-#include <winioctl.h>
-
-bool ReadDisk(unsigned char *&out, DWORD start, DWORD size);
-int main()
-{
-
-	ZwFsControlFile();
-
-	HANDLE handle = CreateFile(L"F:\\work\\cp210x.c",
-		GENERIC_READ,
-		FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL,
-		OPEN_EXISTING,
-		NULL,
-		NULL);
-	if (handle == INVALID_HANDLE_VALUE)
-	{
-		printf("INVALID_HANDLE_VALUE\n");
-		return 0;
-	}
-	BY_HANDLE_FILE_INFORMATION FileInformation;
-	
-	if (GetFileInformationByHandle(handle, &FileInformation) == 0) 
-	{
-		printf("get file infomation ERROR!");
-		return false;
-	}
-	printf("file serial number %u!\n", FileInformation.dwVolumeSerialNumber);
-	printf("file attributes %u!\n", FileInformation.dwFileAttributes);
-	//若文件较小，只需获取nFileSizeLow，若文件很大，还需获取nFileSizeHigh
-	printf("filesize %u!\n", FileInformation.nFileSizeLow);
-	
-	unsigned char *a;
-	bool status = ReadDisk(a, 0, 512);
-	
-	if (status) {
-		for (int i = 0; i<512; i++)
-		{
-			printf("%02X", a[i]);
-		}
-	}
-	else {
-		printf("status is false\n");
-	}
-	
-	getchar();
-	return 0;
-}
-
-bool ReadDisk(unsigned char *&out, DWORD start, DWORD size)
-{
-	OVERLAPPED over = { 0 };
-	over.Offset = start;
-
-//编译之后要用管理员权限运行程序才能够读磁盘
-	HANDLE handle = CreateFile(TEXT("\\\\.\\PHYSICALDRIVE0"),
-		GENERIC_READ,
-		FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL,
-		OPEN_EXISTING,
-		NULL,
-		NULL);
-	if (handle == INVALID_HANDLE_VALUE)
-	{
-		printf("INVALID_HANDLE_VALUE\n");
-		return false;
-	}
-	BY_HANDLE_FILE_INFORMATION FileInformation;
-//	GetLogicalDriveStrings();
-//	SetFilePointer(handle, );
-	unsigned char *buffer = new unsigned char[size + 1];
-	DWORD readsize;
-	if (ReadFile(handle, buffer, size, &readsize, &over) == 0)
-	{
-		printf("ReadFile\n");
-		CloseHandle(handle);
-		return false;
-	}
-	buffer[size] = 0;
-	out = buffer;
-	return true;
-}
-```
-
-
-
-
-
 
 
 
@@ -537,8 +433,6 @@ If the master boot code cannot complete these functions, the system displays one
 
 
 
-
-
 ### Partition Table
 
 ​	The partition table, a 64-byte data structure used to identify the type and location of partitions on a hard disk, conforms to a standard layout independent of the operating system. Each partition table entry is 16 bytes long, with a maximum of four entries. Each entry starts at a 
@@ -549,82 +443,6 @@ predetermined offset from the beginning of the sector, as follows:
 - Partition 3\ 0x01DE(478)
 - Partition 4\ 0x01EE(494)
 
-
-
-## [Recovering Data with NTFS](https://technet.microsoft.com/en-us/library/cc976815.aspx)          
-
-
-
-
-
-
-
-
-
-## NFTS 系统中查找文件的流程
-
-1. 从BootSector中读出文件所在的磁盘的MFT起始簇
-
-   `hVolume = CreateFile(TEXT("\\\\.\\C:"), GENERIC_READ,FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);`
-
-   `ReadFile(hVolume, &bootb, sizeof bootb, &n, 0)`
-
-   ![NTFSBootSector.png](http://upload-images.jianshu.io/upload_images/6128001-4e9ea324df41ba3c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-   bootb为BOOT_BLOCK类型的结构体。该结构体表示了NTFS Boot Sector的结构。
-
-   ```C++
-   typedef struct { //512B   
-   	UCHAR Jump[3];		//Jump Instruction 跳过3个字节   
-   	UCHAR Format[8]; 	//OEM ID ‘N’'T' 'F' 'S' 0x20(空格) 0x20 0x20 0x20   
-   	USHORT BytesPerSector;//Byte/Sector 每扇区有多少字节 一般为512B 0x200  
-   	UCHAR SectorsPerCluster;//Sect/clust 每簇有多少个扇区   
-   	USHORT BootSectors;//res   
-   	UCHAR Mbz1;//保留0  0x00 
-   	USHORT Mbz2;//保留0 0x0000
-   	USHORT Reserved1;// unused  保留0   
-   	UCHAR MediaType;//  Media descriptor, legacy from DOS, 0xF8 indicates fixed disk, 0xF0 a HD 3.5inch floppy
-   	USHORT Mbz3;//0x0000    总是为0   
-   	USHORT SectorsPerTrack;// Sect/track 	每道扇区数，一般为0x3f   
-   	USHORT NumberOfHeads;// Number heads  	磁头数   
-   	ULONG PartitionOffset;// Hidden Sectors	该分区的便宜（即该分区前的隐含扇区数 一般为磁道扇区数0x3f 63）   
-   	ULONG Reserved2[2];	// unused
-    	ULONGLONG TotalSectors;// Total Sectors	该分区总扇区数   
-   	ULONGLONG MftStartLcn;// Logical Cluster of $MFT  MFT表的起始簇号LCN   
-   	ULONGLONG Mft2StartLcn;// Logical Cluster of $MFTMirr  MFT备份表的起始簇号LCN   
-   	ULONG ClustersPerFileRecord;//Clust/File Record segment 每个MFT记录包含几个簇  记录的字节不一定为：ClustersPerFileRecord*SectorsPerCluster*BytesPerSector  
-   	ULONG ClustersPerIndexBlock;// Clusters/index Block  每个索引块的簇数   
-   	LARGE_INTEGER VolumeSerialNumber;//Volume Serial Number   卷序列号   
-   	UCHAR Code[0x1AE]; // 包含Checksum和BootCode之间的部分
-   	USHORT BootSignature; //最后的55和AA部分
-   } BOOT_BLOCK, *PBOOT_BLOCK;
-   ```
-
-   ![loadMFT](http://img.blog.csdn.net/20180112155603632?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
-
-   ​
-
-   ​
-
-   ​
-
-   ## ntfs.h 头文件
-
-ntfs.h头文件中的内容包含的是文件系统当中的一些结构体的定义。
-
-​	
-
-
-
-## MFT 布局
-
-​	MFT的每条记录都包含一个头部和一个或多个属性（按属性ID升序），并以四个字节的0xFFFFFFFF结束
-
-![MFT布局](http://img.blog.csdn.net/20180117201032032?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
-
-
-
-### MFT FILE RECORD
 
 
 
@@ -665,8 +483,6 @@ typedef enum {
 
 
 
-
-
 ## 对于NTFS 文件系统的研究
 
 ​	NTFS分区的最开始的16个扇区是分区引导扇区，用于保存分区引导代码，接下来是主文件表(MFT),如果MFT所在的磁盘扇区出现损坏，NTFS文件系统会将MFT转移到到硬盘的其他扇区，这样就保证了NTFS文件系统和Windows操作系统的正常运行。比之先前的FAT16和FAT32文件系统的FAT(文件分配表)，FAT只能固定在分区引导扇区的后面，一旦该扇区，整个文件系统就会瘫痪，NTFS文件系统显然要先进的多了。不过这种移动MFT的做法却也并非十全十美，如果分区引导代码中指向MFT的部分出现错误，那么NTFS文件系统便会不知道到哪里寻找MFT ，从而会报告“磁盘没有格式化”这样的错误信息。为了避免这样的问题发生，分区引导代码中会包含一段校验程序，专门负责侦错。
@@ -681,12 +497,12 @@ typedef enum {
 
 因为NTFS将所有的数据都视为文件，理论上除了引导扇区必须位于第一个扇区以外，NTFS卷可以在任意的位置存放任意的文件，但是通常都会遵循一定的布局。
 
-### NTFS的特点
+## NTFS的特点
 
 - NTFS与FAT文件系统一样，也是用**簇**作为数据的存取的最小单位。但是因为他将所有的数据，包括文件系统管理数据也做为文件进行管理，所以NTFS文件系统中的所有扇区都被分配以簇号，并以0开始对所有的簇进行编号，文件系统的0号扇区为0号簇的起始位置。
 - 它的可升级性基于使用常规结构对特殊数据结构进行管理。在NTFS文件系统将所有的数据都视为文件，通常在其他文件系统中被隐藏的管理数据在NTFS中也被存储在文件中，文件系统管理数据可以像普通文件一样被存放在文件系统内任何位置。
 
-### NTFS 元文件
+## NTFS 元文件
 
 ​	NTFS文件系统被创建时，会同时建立一些重要的系统信息。这些系统信息也全是以文件的形式存在，被称为元文件。元文件的文件名都以“ $”符号开头，表示其为隐藏的系统文件，用户不可直接访问。
 
@@ -712,7 +528,7 @@ NTFS的元文件总共有17个，其具体的含义如下：
 
 
 
-### DBR (DOS BOOT RECORD)的作用
+## DBR (DOS BOOT RECORD)的作用
 
 ​	NTFS的引导扇区也位于文件系统的0号扇区，这是它与FAT文件系统在布局上的唯一相同之处。
 
@@ -767,16 +583,20 @@ BytesPerFileRecord = bootb.ClustersPerFileRecord < 0x80
 
 
 
-### MFT(Master File Record)
+## MFT(Master File Record)
 
 ​	格式化成NTFS文件系统时，就是在其中建立了一个主文件表MFT，其中包含16个元文件的文件记录。为了尽可能减少$MFT文件产生碎片的可能性，系统预先为其预先为其预留整个文件系统大约12.5%的空间。只有在用户数据区的空间用尽时，才会临时让出MFT区的部分空间存储数据，但一旦数据区有了足够的空间，就会立即收回原来让出的MFT空间。MFT是NTFS文件系统的核心，MFT由一个个的MFT项(也称为文件记录)组成，其中用各种属性记录着该文件或目录的各种信息。每个MFT项实际的大小在引导扇区中进行说明，Microsoft的所有版本都使用1024字节的大小。前部为一个包含几十个字节的具有固定的大小和结构的MFT头，剩余的字节为属性列表，用于存放各种属性。**每一个文件和目录的信息都包含在MFT当中**，每一个目录和文件在表中至少有一个MFT项，除了引导扇区以外，访问其他的任何一个前都需要先访问MFT，在MFT中找到该文件的MFT项，根据MFT项中记录的信息找到文件内容并对其进行访问。
 
-#### MFT的基本特点
+​	文件记录是$MFT文件的基本组成部分，卷中的所有文件都由至少一个文件记录来描述，文件通过主文件表MFT来确定其在磁盘上的存储位置、大小、属性等信息, 对于使用多个文件记录的文件，其第一个文件记录叫基本文件记录，其余的叫做扩展文件记录。MFT的每条记录都包含一个头部和一个或多个属性（按属性ID升序），并以四个字节的0xFFFFFFFF结束。
+
+### MFT的基本特点
 
 - MFT的第一个区域是签名，所有的MFT项都有相同的签名（FILE）。如果在项中发现错误，可能将其改写成“BAAD”的字样。
 - MFT项还有一个标志域用以说明该项是一个文件项还是目录项，以及它的分配状态。MFT的分配状态也在一个$BITMAP属性文件中进行描述。
 - 每个MFT项占用两个扇区，每个扇区的结束两个字节都有一个修正值，这个修正值与MFT项的更新序列号相同，如果发现不同，会认为该MFT项存在错误。
 - 如果一个文件的属性较多，使用一个MFT项无法容纳下全部的属性，可以使用多个MFT项，第一个项被称为基本文件记录或基本MFT项。
+
+### MFT头部
 
 ![MFT](http://img.blog.csdn.net/20180117194726094?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
@@ -784,32 +604,92 @@ BytesPerFileRecord = bootb.ClustersPerFileRecord < 0x80
 /* NTFS RECORD HEADER */
 typedef struct {
 	ULONG Type;              // NTFS记录的类型，FILE(46494C45)/BAAD/INDX/CHKD/HOLE
-	USHORT UsaOffset;        // Update Sequence Array：更新序列号偏移
-	USHORT UsaCount;         // 更新序列号的数组个数，通常为3
-	USN Usn;       // 日志序列号(LSN)
+	USHORT UsaOffset;        // Update Sequence Array：更新序列号偏移(相对文件头部)
+	USHORT UsaCount;         // 更新序列号的数组个数+1(N)，通常为3
+	USN Usn;       // 日志序列号(LSN)该数值在每一次被修改的时候都会被改动。
 } NTFS_RECORD_HEADER, *PNTFS_RECORD_HEADER;  // 16 bytes
 
 /* FILE RECORD_HEADER */
 typedef struct {
 	NTFS_RECORD_HEADER Ntfs;       // when Type = FILE
-	USHORT SequenceNumber;         // MFT entry 被重用次数 
+	USHORT SequenceNumber;         // 重复使用 更新序列号(删除一次加1) 
 	USHORT LinkCount;              // 硬链接数
-	USHORT AttributesOffset;       // 第一个属性在此 MFT entry 中的偏移
+	USHORT AttributesOffset;       // 第一个属性数据在此 MFT entry 中的偏移
 	USHORT Flags;                  // 0x0000=deleted file; 0x0001=file, 0x0002=deleted dir; 0x0003= dir;
 	ULONG BytesInUse;              // MFT项的逻辑长度(已被该 MFT entry 使用的字节数,即已使用的空间)
 	ULONG BytesAllocated;          // MFT的物理长度(分配给该 MFT entry 的字节数，即总共的空间)
-	ULONGLONG BaseFileRecord; /*基本文件记录索引号， If the MFT entry contains attributes that overflowed a base MFT entry, this member contains the file reference number of the base entry; otherwise , it contains zero.*/
-	USHORT NextAttributeNumber;    // 下一属性ID number assigned to next attribute
+	
+ /*当前文件记录的基本文件记录的索引，如果当前文件记录是基本文件记录则该值为0，否则指向基本文件记录的记录索引。注意该值的低6字节是MFT记录号，高2字节是该MFT记录的序列号。*/	
+	ULONGLONG BaseFileRecord;
+
+/* 下一个属性的ID，下一次将会被添加到文件记录的属性的ID，每次往文件记录中添加属性时该值都会增加，每次文件记录被重新使用时该值都会被清零，第一个值肯定是0*/
+	USHORT NextAttributeNumber;    
 	UCHAR border[2];			   // 边界
-	ULONG MFTRecordNo;			   // MFT记录编号(起始编号0)
-	ULONGLONG updateSeqArr;		   // 更新序列号数组
+	ULONG MFTRecordNo;			   // 该MFT的记录编号(起始编号0)
+/*更新序列号数组,该值记录的是文件记录被修改的次数，每次修改时该值为+1，(包括文件被删除操作)该值不能够为0。*/	
+	ULONGLONG updateSeqArr;
 	ULONGLONG Reserved;			   // 属性和修正值
 } FILE_RECORD_HEADER, *PFILE_RECORD_HEADER;  // 42 bytes
 ```
 
+- 更新序列号: 更新序列号是Microsoft公司为了确保记录数据的可靠性而在NTFS卷中提出的一项技术，在NTFS卷中，所有的记录类型数据(FR、IR)占用的空间都是按扇区尺寸(512字节)对齐。保护记录数据时，在每512字节的最末2个字节都会写入一个校验值以确保记录中的所有数据都被正确的写入磁盘中，而校验值所在位置的数据被拷贝到记录头之后被称作USA(Update Sequence Array)的数据块中，系统将记录数据从磁盘读入内存时将检查每个校验值是否与记录头的中序列号是否相同，如果相同则用USA中相应位置的数据恢复校验值位置的数据，反之则表明该记录被没有正确地修改。
+
+在每次写记录数据时序列号都会加1，当序列号为0时则再加1。
+
+|      |               |               |      |                |
+| ---- | ------------- | ------------- | ---- | -------------- |
+| 校验码  | 第1个512字节扇区末原值 | 第2个512字节扇区末原值 | 。。。。 | 最后一个512字节扇区末原值 |
+
+- 虚拟簇号: 非驻留数据中的每个簇都有一个特定的序号，这个序号就叫做虚拟簇号，虚拟簇号0指向数据流的第一个簇。
+
+
+- 逻辑簇号：卷中的每一个簇都有一个特定的序号，这个序号就叫做逻辑簇号，逻辑簇号0指向卷中的第一个簇(引导扇区)。
+- 数据流描述: 存放在间隔的簇中的属性数据称为**流**。每一个流都由起始簇号和尺寸来描述。流的起始簇号是相对于前一个流的偏移，该值是一个有符号数。流描述的格式如下：
+
+| 名字      | 偏移   | 尺寸   | 说明                                       |
+| ------- | ---- | ---- | ---------------------------------------- |
+| SD_Desc | 0    | 1    | 流描述说明，高4位(M)描述流描述偏移的字节数，低4位(N)描述流描述尺寸的字节数 |
+| SD_Size | 1    | N    | 当前流的尺寸                                   |
+| SD_Off  | N+1  | M    | 当前流相对于上一个流的偏移，如果该值的最高位为1则表示该值是一个负数       |
+
+​	一个流描述之后紧随着下一个流描述，如果下一个描述的SD_Desc为0则表示当前描述是最后一个。一般情况下压缩文件和稀疏文件数据都以流的形式描述。
 
 
 
+## 文件属性记录
+
+​	NTFS文件系统当中的文件属性可以分成两种：常驻属性和非常主属性，常驻属性直接保存在MFT当中，像文件名和相关时间信息(例如文件的创建时间、修改时间)永远属于常驻属性，非常驻属性则保存在MFT之外，但是会使用一种复杂的索引方式来进行指示。如果文件或者是文件夹小于1500字节(其实我们的电脑中有相当多的这样的大小的文件或者是文件夹)，那么它们的所有的属性，包括内容都会常驻在MFT中，而MFT是windows一启动就会载入到内存当中的，这样当你查看这些文件或者是文件夹的时候，其实他们的内容早已在缓存当中，这样就大大提高到了文件和文件夹的访问速度。
+
+> **为什么FAT的效率不如NTFS高**、
+>
+> ​	FAT的文件分配表只列出了每一个文件的名称以及起始簇，并没有说明这个文件是否存在，而需要通过其所在的文件夹的记录来判断，而文件夹入口又包含在文件分配表的索引当中。因此访问文件的时候，首先要读取文件分配表来确定文件是否存在，然后再次读取文件分配表找到文件的首簇，接着以链式的检索找到文件的所有存放簇，最终确定后才可以访问。
+
+​	文件中的每个记录都是由属性组成。每个属性由相同的格式构成，首先是一个标准属性记录头，然后存放属性的专用数据。下面列出$AttrDef中定义的可用到的属性。
+
+| 类型    | 操作系统 | 描述                     |
+| ----- | ---- | ---------------------- |
+| 0x10  |      | STANDARD_INFORMATION   |
+| 0x20  |      | ATTRIBUTE_LIST         |
+| 0x30  |      | FILE_NAME              |
+| 0x40  | NT   | VOLUME_VERSION         |
+| 0x40  | 2K   | OBJECT_ID              |
+| 0x50  |      | SECURITY_DESCRIPTOR    |
+| 0x60  |      | VOLUME_NAME            |
+| 0x70  |      | VOLUME_INFORMATION     |
+| 0x80  |      | DATA                   |
+| 0x90  |      | INDEX_ROOT             |
+| 0xA0  |      | INDEX_ALLOCATION       |
+| 0xB0  |      | BITMAP                 |
+| 0xC0  | NT   | SYMBOL_LINK            |
+| 0xC0  | 2K   | REPARSE_POINT          |
+| 0xD0  |      | EA_INFORMATION         |
+| 0xE0  |      | EA                     |
+| 0xF0  | NT   | PROPERTY_SET           |
+| 0x100 | 2K   | LOGGED_UNTILITY_STREAM |
+
+##### MFT布局
+
+![MFT布局](http://img.blog.csdn.net/20180117201032032?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
 
 
@@ -836,10 +716,6 @@ FAT文件系统在读文件时，操作系统从目录区中读取文件的相�
 
 
 
-
-
-
-
 ## NTFS中删除文件的过程
 
 ​	下面是删除"\子目录1\file.txt"文件的过程。
@@ -856,4 +732,8 @@ FAT文件系统在读文件时，操作系统从目录区中读取文件的相�
 
 
 
+## NTFS中文件恢复
 
+> **原理：** 首先了解一下磁存储技术的原理，这有助于我们了解数据恢复工作。磁存储技术的工作原理是通过改变磁粒子的极性来在磁性介质上记录数据。在读取数据时，磁头将存储介质上的磁粒子极性转换成相应的电脉冲信号，并转换成计算机可以识别的数据形式。进行写操作的原理也是如此。要使用硬盘等介质上的数据文件，通常需要依靠操作系统所提供的文件系统功能，文件系统维护着存储介质上所有文件的索引。因为效率等诸多方面的考虑，在我们利用操作系统提供的指令删除数据文件的时候，磁介质上的磁粒子极性并不会被清除。操作系统只是对文件系统的索引部分进行了修改，将删除文件的相应段落标识进行了删除标记。同样的，目前主流操作系统对存储介质进行格式化操作时，也不会抹除介质上的实际数据信号。正是操作系统在处理存储时的这种设定，为我们进行数据恢复提供了可能。值得注意的是，这种恢复通常只能在数据文件删除之后相应存储位置没有写入新数据的情况下进行。因为一旦新的数据写入，磁粒子极性将无可挽回的被改变从而使得旧有的数据真正意义上被清除。删除文件，其实是修改文件头的前2个代码。这种修改映射在文件分配表中，就为文件作了删除标记，但文件的内容仍保存在原来的簇，如果不被后来保存的数据覆盖，它就不会从磁盘上抹掉。文件被删除后，既然其数据仍在磁盘上，文件分配表中也有它的信息，这个文件就有恢复的机会，只要找出文件头，并恢复前2个代码，在文件分配表中重新映射一下，这个文件就被恢复了。但是，文件被删除后，如果它所占的簇被存入其他数据，文件头也被覆盖，这个文件在文件分配表中的信息就会被新的文件映射所代替，这个文件一般也就无法恢复了。恢复文件，其实就是用恢复软件的查找分析功能找出文件头，重写前2个代码，并修改文件分配表中的映射记录。仅仅是删除的文件，恢复起来比较容易，如果整个磁盘被格式化了，恢复的困难就更大些，但是只要恢复软件能搜寻，并分析到它的残存的文件头，就有可能利用文件头中的信息，连接文件原来占用的簇，以恢复被删除的文件。然而，如果一个文件的某些簇被其他数据覆盖，即使恢复软件强行把原来占用各簇的数据连接起来恢复文件，但是因为其中的某些簇已不是该文件自身的数据，所以这个恢复后的文件往往无法使用。
+
+​	NTFS文件系统中。在文件被彻底删除之后，系统会将此文件记录中的状态字节由文件使用标志“01”变为文件删除标志“00”。而其文件名称、文件的大小以及Run List等重要属性都不会发生变化。而且数据区中的内容也不会发生变化，因此可以将文件数据恢复但是。如果该文件不是使用连续的簇号来存储文件数据，或者文件的数据区已被新的数据所占用，即原数据区被覆盖，那么。文件就很难被恢复出来。如果数据是使用连续的簇号存储。且数据区中的数据没有被新数据覆盖，那么，就可以使用WinHex等常用恢复软件进行恢复只需要选择数据区的全部内容并进行复制，然后将该文件的数据区中所有十六进制值保存为一个新文件，即可实现文件的恢复。
