@@ -16,70 +16,6 @@ typedef struct{
 
 严格的讲，一个FileReferenceNumber包含一个48bit的指向MFT的index，和一个用来记录这个表的入口(entry)被复用(reused)了多少次的16bits的序列号。但是当使用`FSCTL_GET_NTFS_FILE_RECORD` 参数时,这个16bit的序列号会被忽略。因此,为了获得在30号index的文件记录, 30就应该被赋值给FileReferenceNumber. 若30号index 处的表入口(Table entry)是空的, 那么`FSCTL_GET_NTFS_FILE_RECORD` 就会获取一个附近的非空入口(nearby entry that is not empty)。为了验证想要的table entry被取得，有必要将output buffer 和input buffer中的FileReferenceNumber的低48位进行比较。
 
-
-
-​	本节的剩余部分记录NTFS在磁盘上表现的数据结构，包括一个简单的实例，该实例用来说明恢复数据和被删除的文件的数据结构。磁盘数据结构(on-disk data structures)的描述被用来解释`FSCTL_GET_NTFS_FILE_RECORD` 获取的FileRecordBuffer中的返回值的内容。
-
-```c++
-// **NTFS RECORD HEADER**
-typedef struct{
-  ULONG Type;
-  USHORT UsaOffset;
-  USHORT UsaCount;
-  USN Usn;
-}NTFS_RECORD_HEADER, *PNTFS_RECORD_HEADER;
-```
-
-数据成员：
-
-- Type： NTFS记录的类型，定义的值包括：FILE 、INDX、BAAD、HOLE、CHKD。
-- JsaOffset： 字节(Byte)描述的偏移量,从结构的开始位置到Update Sequence Array。
-- JsaCount：The number of values in the Update Sequence Array。
-- Jsn： The Update Sequence Number of the NTFS record。
-
-```c++
-//****FILE RECORD_HEADER****
-typedef struct{
-  NTFS_RECORD_HEADER Ntfs;
-  USHORT SequenceNumber;
-  USHORT LinkCount;
-  USHORT AttributeOffset;
-  USHORT Flags;
-  ULONG BytesInUse;
-  ULONG BytesAllocated;
-  ULONGLONG BaseFileRecord;
-  USHORT NextAttributeNumber;
-}FILE_RECORD_HEADER, *PFILE_RECORD_HEADER;
-```
-
-数据成员：
-
-- Ntfs :  一个FILE类型的NTFS_RECORD_HEADER结构。
-
-- SequenceNumber: The number of times that the MFT entry has been reused.
-
-- LinkCount: The number of directory links to the MFT entry.
-
-- AttributeOffset: The offset, in bytes, from the start  of the structure to the first attribute of the MFT entry.
-
-- Flags:  A bit array of flags specifying properties of the MFT entry. The values defined include: 
-
-  InUse 0x0001  //The MFT entry is in use
-
-  Directoty  0x0002   // The MFT entry represents a directory.
-
-- BytesInUse : The number of bytes used by the MFT entry.
-
-- BytesAllocated: The number of bytes allocated for MFT entry.
-
-- BaseFileRecord: If the MFT entry contains attributes that overflowed a base MFT entry, this member contains  the file reference number of the base entry ;otherwise, it contains zero;
-
-- NextAttributeNumber: The number that will assigned to the next attribute added to the MFT entry.
-
-备注： MFT中的一个条目(entry)包含一个FILE_RECORD_HEADER，跟随在一系列的attributes之后。
-
-
-
 ```c++
 typedef struct{
   ATTRIBUTE_TYPE AttributeType;
@@ -92,10 +28,6 @@ typedef struct{
 }ATTRIBUTE, *PATTRIBUTE;
 ```
 
-
-
-
-
 #### RESIDENT_ATTRIBUTE
 
 ```c++
@@ -106,8 +38,6 @@ typedef struct{
   USHORT Flags;
 }RESIDENT, *PRESIDENT_ATTRIBUTE;
 ```
-
-
 
 #### NONRESIDENT_ATTRIBUTE
 
@@ -126,28 +56,34 @@ typedef struct{
 }NONRESIDENT_ATTRIBUTE, *PNONRESIDENT_ATTRIBUTE;
 ```
 
+#### AttributeStandardInformation（10H）
 
+![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_9.png)
 
-#### AttributeStandardInformation
+其中0x20处的文件属性解释如下：
+
+![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_10.png)
 
 ```c++
 typedef struct{
-  ULONGLONG CreateTime;
-  ULONGLONG ChangeTime;
-  ULONGLONG LastWriteTime;
-  ULONGLONG LastAccessTime;
-  ULONG FileAttributes;
-  ULONG AlignmentOrReservedOrUnkonwn[3];
-  ULONG QuotaId; //NTFS 3.0 only
+  ULONGLONG CreateTime; //文件创建时间
+  ULONGLONG ChangeTime;	//文件修改时间
+  ULONGLONG LastWriteTime;//MFT变化时间
+  ULONGLONG LastAccessTime;//文件访问时间
+  ULONG FileAttributes;	// 文件属性
+  ULONG AlignmentOrReservedOrUnkonwn[3]; 
+  ULONG QuotaId; //NTFS 3.0 only 类ID，一个双向的
   ULONG SecurityId; //NTFS 3.0 only
   ULONGLONG QuotaCharge; //NTFS 3.0 only
   USN Usn;//NTFS 3.0 only
 }STANDARD_INFORMATION, *PSTANDARD_INFORMATION;
 ```
 
+#### AttributeAttributeList（20H）
 
+​	当一个文件需要好几个文件记录的时候，才会需要20H属性。20H属性记录了一个文件的下一个文件记录的位置。如下：
 
-#### AttributeAttributeList
+![wKiom1LTRoahX81uAAKQe4fYOWg137](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/wKiom1LTRoahX81uAAKQe4fYOWg137_thumb.jpg)
 
 ```c++
 typedef struct{
@@ -162,18 +98,11 @@ typedef struct{
 }ATTRIBUTE_LIST, *PATTRIBUTE_LIST;
 ```
 
-- 备注：
+#### AttributeFileName(30H)
 
-  这个属性列表属性必须是nonresident并且包含了一个ATTRIBUTE_LIST结构列表。
+​	用于存储文件名，是常驻属性，最少68字节，最大578字节，可容纳最大unicode字符的文件名长度。
 
-  attribute_list属性只有在一个文件的属性在一个单MFT记录（a single MFT record）中不匹配的时候才需要. 一个单MFT条目溢出（overflowing）的原因可能包括：
-
-  - 这个文件有很多的可变名字（即硬链接很多）
-  - The attribute value is large, and the volume is badly fragmented.
-  - The file has a complex security descriptor（does not affect NTFS 3.0）
-  - The file has many streams
-
-#### AttributeFileName
+![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_11.png)
 
 ```c++
 typedef struct{
@@ -189,7 +118,7 @@ typedef struct{
   UCHAR NameLength;
   UCHAR NameType; // 0x01 = Long, 0x02 = Short
   WCHAR Name[1];
-}FILENAME_ATTRIBUTE, *PFILENAME_ATTRIBUTE;
+}FILENAME_ATTRIBUTE, *PFILENAME_ATTRIBUTE;//67B
 ```
 
 - 备注：
@@ -220,13 +149,9 @@ typedef struct{
 
 安全描述属性作为一个标准自持的(self-relative)安全描述存储在磁盘上。在NTFS3.0 格式的卷上，这个属性通常不存在于MFT条目当中。
 
-
-
 #### AttributeVolumeName
 
 卷名(volume name)属性仅仅包含一个Unicode编码的字符串volume label。
-
-
 
 #### AttributeVolumentInformation
 
@@ -239,22 +164,39 @@ typedef struct {
 } VOLUME_INFORMATION, *PVOLUME_INFORMATION; 
 ```
 
+#### AttributeData(80H)
 
+Data 属性容纳着文件的内容，文件的大小一般指的就是未命名的数据流的大小。该属性没有最大最小限制，最小情况是该属性为常驻属性。最复杂的情况是为非常驻属性。一个示例如下：
 
-#### AttributeData
+![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_12.png)
 
-Data 属性包含所有的创建者选择的数据
+​	当属性不能存放完所有的数据，系统就会在NTFS数据区域开辟一个空间存放，这个区域是以簇为单位的。Run List就是记录这个数据区域的起始簇号和大小，这个示例中，Run List的值为“12 41 47 03”，因为后面是00H，所以知道已经是结尾。如何解析这个Run List呢？ 
+​	第一个字节是压缩字节，高位和低位相加，1+2=3，表示这个Data Run信息占用三个字节，其中高位表示起始簇号占用多少个字节，低位表示大小占用的字节数。在这里，起始簇号占用1个字节，值为03，大小占用2个字节，值为47 41。解析后，得到这个数据流起始簇号为3，大小为18241簇。
 
+#### AttributeIndexRoot(90H)
 
+​	  90H属性是索引根属性，该属性是实现NTFS的B+树索引的根节点，它总是常驻属性。如下图：
 
-#### AttributeIndexRoot
+![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_13.png)
+
+索引根的结构如表：
+
+[![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_14.png)](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_14.png)
+
+索引头的结构如表：
+
+[![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_15.png)](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_15.png)
+
+索引项结构如表：
+
+![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_16.png)
 
 ```c++
 typedef struct {
-  ATTRIBUTE_TYPE Type;
-  ULONG CollationRule;
-  ULONG BytesPerIndexBlock;
-  ULONG ClustersPerIndexBlock;
+  ATTRIBUTE_TYPE Type;	// 4B 属性类型
+  ULONG CollationRule;	// 4B 排序规则
+  ULONG BytesPerIndexBlock;	// 4B 索引项分配大小
+  ULONG ClustersPerIndexBlock; // 每索引记录的簇数
   DIRECTORY_INDEX DirectoryIndex;
 } INDEX_ROOT, *PINDEX_ROOT;
 ```
@@ -263,7 +205,29 @@ typedef struct {
 
   一个INDEX_ROOT结构后面跟随者一个DIRECTORY_ENTRY结构序列。
 
-#### AttributeIndexAllocation
+#### AttributeIndexAllocation(A0H)
+
+​	A0属性是索引分配属性，也是一个索引的基本结构，存储着组成索引的基本结构，存储着组成索引的B+树目录索引子节点的定位信息。它总是常驻属性。如下示例：
+
+![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_17.png)
+
+​	根据上图A0H属性的“Run List”可以找到索引区域，偏移到索引区域所在的簇，`21 03 59 47`   ==> 起始簇：0x4750==18265 。簇大小：3
+
+起始扇区号 = 该分区的起始扇区+ 簇号*每个簇的扇区数 即：
+
+64 + 18265*8  = 146124
+
+![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_18.png)
+
+上图的偏移0x28还要加上0x18 = 0x40。
+
+标准索引头的解释如下：
+
+![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_19.png)
+
+索引项的解释如下：
+
+![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_20.png)
 
 ```c++
 typedef struct{
@@ -279,18 +243,16 @@ typedef struct{
 
 #### DIRECROTY_INDEX
 
+![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_15.png)
+
 ```c++
 typedef struct{
-  ULONG EntriesOffset;
-  ULONG IndexBlockLength;
-  ULONG AllocatedSize;
+  ULONG EntriesOffset; // 每一个索引项的偏移
+  ULONG IndexBlockLength; // 索引项的总大小
+  ULONG AllocatedSize;	// 索引项的分配大小
   ULONG Flags; //0x00 = Small directory, 0x01 = Large directoty
 }DIRECTOTY_INDEX, *PDIRECTOTY_INDEX;
 ```
-
-
-
-
 
 #### DIRECTOTY_ENTRY
 
@@ -315,8 +277,6 @@ typedef struct{
 
 位图属性包含一个bits数组。文件"\$Mft"包含有一个bitmap属性，这个属性记录了哪个MFT表条目在使用，并且directories通常包含有一个bitmap属性用以记录哪一个索引块包含有效的条目
 
-
-
 #### AttributeReparsePoint
 
 ```c++
@@ -328,8 +288,6 @@ typedef struct{
 }REPAESE_POINT,*PREPARSE_POINT;
 ```
 
-
-
 #### AttributeEAInformation
 
 ```c++
@@ -338,8 +296,6 @@ typedef struct {
   ULONG EaQueryLength;
 } EA_INFORMATION, *PEA_INFORMATION; 
 ```
-
-
 
 #### AttributeEA
 
@@ -356,15 +312,14 @@ typedef struct {
 
 
 
-#### AttributePropertySet
+##遍历一个分区下面的文件列表的思路
 
-用来支持Native Structured Storage(NSS), 这一特性在NTFS3.0的beta测试版本中被移除。
-
-
-
-#### AttributeLoggedUtilityStream
-
-logged utility stream属性包含创建者选择的所有的属性数据，但是对于属性的操作会被记录到NFTS的log file，就像NTFS的元数据被改变一样。 这个属性用在Encrypting File System (EFS)当中。
+1. 定位DBR，通过DBR可以得知“$MFT”的起始簇号及簇的大小。
+2. 定位“$MFT”，找到“$MFT”后，在其中寻找根目录的文件记录，一般在5号文件记录。
+3. 在90H属性中得到B+树索引的根节点文件信息，重点在A0属性上。通过属性中的“Run List”定位到其数据流。
+4. 从“Run List”定位到起始簇后，再分析索引项可以得到文件名等信息。
+5. 从索引项中可以获取“$MFT”的参考号，然后进入到“$MFT”找到对应的文件记录。
+6. 然后再根据80H属性中的数据流就可以找到文件真正的数据了。
 
 
 
@@ -446,39 +401,6 @@ predetermined offset from the beginning of the sector, as follows:
 
 
 
-### MFT Entry Attribute
-
-​	在NTFS中，所有与数据相关的信息都称为“属性”，NTFS与其他文件系统最大的不同之处在于，大多数文件系统是对文件的内容进行读写，而NTFS则是对包含文件内容的属性进行读写。
-
-在数据结构中，属性又可以分为长驻属性和非常驻属性：
-
-1. **常驻属性：** 有的属性其属性内容很小，它的MFT项可以容纳下它的全部内容，为了节约空间，系统会直接将其存放在MFT项中，而不再为其另外分配簇空间，这样的属性称为常驻属性
-2. **非常驻属性：** 非常驻属性是指那些内容较大，无法完全存放在其MFT项中的属性。如文件的数据属性，通常内容很大，需要在MFT之外另为其分配足够的簇空间进行存储，这样的属性就是非长驻属性。
-
-![MFTEntryAttribut](http://img.blog.csdn.net/20180112190513952?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
-
-```C++
-typedef enum {   
-	AttributeStandardInformation = 0x10,  
-	AttributeAttributeList = 0x20, 
-	AttributeFileName = 0x30, 
-  	AttributeObjectId = 0x40,   
-	AttributeSecurityDescriptor = 0x50, 
-	AttributeVolumeName = 0x60,
-  	AttributeVolumeInformation = 0x70,
-	AttributeData = 0x80,
-	AttributeIndexRoot = 0x90,
-	AttributeIndexAllocation = 0xA0,
-	AttributeBitmap = 0xB0,
-	AttributeReparsePoint = 0xC0,
-	AttributeEAInformation = 0xD0,
-	AttributeEA = 0xE0,
-	AttributePropertySet = 0xF0,
-	AttributeLoggedUtilityStream = 0x100,
-	AttributeEnd = 0xFFFFFFFF
-} ATTRIBUTE_TYPE, *PATTRIBUTE_TYPE;
-```
-
 
 
 
@@ -518,9 +440,33 @@ typedef enum {
 
 ​	NTFS文件系统被创建时，会同时建立一些重要的系统信息。这些系统信息也全是以文件的形式存在，被称为元文件。元文件的文件名都以“ $”符号开头，表示其为隐藏的系统文件，用户不可直接访问。但是能够被特殊的工具列出，如NFI.EXE。
 
-​	FAT文件系统中簇号指针在FAT表中，而NTFS中簇号指针包含在\$MFT和\$MFTMirr文件当中。
+​	NTFS中的所有的一切皆文件，MFT也是一个文件。同时MFT也有一个它自己的entry，MFT中的第一个entry叫做\$MFT，它描述了MFT在磁盘上的位置。实际上，这是唯一一个描述MFT在磁盘上的位置的地方；也就是说，***你需要处理这个entry才能知道MFT的布局和大小***。
 
-NTFS的元文件总共有17个，其具体的含义如下：
+例如：
+
+![image](https://images0.cnblogs.com/blog/646229/201501/242257382662732.png)
+
+在Microsoft实现的NTFS中，MFT开始保持尽量小尺寸，当需要更多的entry时扩展MFT。理论上说，操作系统可以在创建文件系统的时候创建固定数量的entry，但是Microsoft实现动态特性允许很方便的通过分卷扩展文件系统容量。Microsoft在MFT entry创建后不删除它们。
+
+### MFT entry的内容
+
+​	每一个MFT entry的大小定义在引导扇区中，但是Microsoft使用的所有版本都使用1024字节大小。数据结构开始的42个字节包含12个域，剩余的982字节没有特定的结构，可以使用属性来填充。每一个MFT entry的第一个域是签名，一个标准的entry是ASCII字符串“FILE”，如果一个entry里面发现了错误，它可能含有字符串 “BAAD”，还有一个标志域用来标识这个entry是否使用、这个entry是否是一个目录。一个MFT entry的分配状态也可以通过\$MFT文件的\$BITMAP属性来检查。如果一个文件无法把它的所有属性放进一个entry，它可以使用多个entry。当这种情况发生的时候第一个entry被称为基本文件记录，或者基本MFT entry，后续的每一个entry都在它的固定域保存有基本entry的地址。
+
+
+
+### MFT entry地址
+
+​	每一个MFT entry都使用一个48位的顺序地址，第一个entry地址是0。MFT最大地址随着MFT的增长而增大，它的值由\$MFT的大小除以每一个entry的大小来计算(**???没明白**)。Microsoft称这个顺序地址为文件编号(file number). 每一个MFT entry还有一个16位的顺序号，当entry分配的时候这个顺序号增长。例如，想象一下MFT entry 313的顺序号是1，entry 313的文件删除了，然后这个entry被分配给一个新的文件。当这个entry被重新分配的时候，他得到一个新的顺序号2. MFT entry和顺序号组合起来，顺序号放在高16位，组成一个64位的文件参考地址。
+
+
+
+![image](https://images0.cnblogs.com/blog/646229/201501/242257394389189.png)
+
+MFT 使用文件参考地址来引用MFT entry,这是由于顺序号使得检查文件系统是否损坏变得容易。例如，如果系统在一个文件的数据结构被分配的时候崩溃了，顺序号可以用来判断一个数据结构是否包含有MFT entry，是因为上一个文件使用了它还是它是新文件的一部分。我们也可以用它来恢复被删除的内容。例如，如果我们有一个未分配的数据结构，里面有文件参考号，我们可以判断这个数据结构被使用以来MFT entry是否被重新分配过。顺序号在信息挖掘中有很大的作用，但是我们主要研究的是文件号，或者说是MFT entry的地址。
+
+​	Microsoft保留了前16个MFT entry作为文件系统元文件(Microsoft文档声称只保留了前16个entry，但是实际上第一个用户文件或者是目录从entry 24开始。entry 17 到23作为缓冲entry防止预留的不够用导致溢出。)这些个保留并且未被使用的entry被置为分配状态并且只有基本的信息。 每一个文件系统元文件都列在根目录，通常情况下普通用户是看不到他们的。
+
+ 一些元文件的具体含义如下：
 
 - **$MFT:** 它其实是整个主文件表，也就是将整个MFT看做一个文件。
 - **$MFTMirr:** MFT前几个MFT项的备份，NTFS也将其作为一个文件看待。
@@ -556,6 +502,101 @@ NTFS中第一个扇区DBR是一个文件，也是\$ROOT文件的第一个扇区�
 ![MFT与DBR的关系.PNG](http://upload-images.jianshu.io/upload_images/6128001-3ab13e25934af0d3.PNG?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 \$MFT的起始位置由DBR的BPB参数确定，\$MFTMirr的起始位置也由DBR的BPB参数确定。在NTFS中，除了DBR本身是预设的，其他文件信息都存储在\$MFT中。
+
+### MFT entry 属性概念
+
+​	MFT entry只有很少的内部结构，它的大部分的空间都被用来存储属性，属性是用来存储特定类型数据的数据结构。 属性有许多种，每种都有其独特的内部结构。这是NTFS相较于其他的文件系统的不同之处之一。大部分文件系统仅仅用来读写文件内容，而NTFS读写属性，属性的一种包含有文件的内容。
+
+​	尽管所有的属性都保存着不同类型的数据，所有的属性都有两个部分：头部和内容。下图显示了一个MFT entry有四个头部(三个属性头部，一个MFT entry头部)和内容对。头部是所有属性通用的(大小固定)。内容和属性类型相关，并且可以是任意的大小。
+
+![image](https://images0.cnblogs.com/blog/646229/201501/312253060814892.png)
+
+#### 属性头部
+
+​	头部标识了属性的类型、大小和名称。头部还有是否压缩和加密的标识。属性类型是一个数值的标识用来标识数据的类型，一个MFT entry可以有多个相同类型的属性。有一些属性可以被赋予一个名字，以UTF-16的unicode字符串的形式存储在属性头部。
+
+![MFTEntryAttribut](http://img.blog.csdn.net/20180112190513952?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+- 常驻属性的属性头
+
+| 偏移(16进制) | 长度(Byte) | 常用值(16进制) | 含义               |
+| -------- | -------- | --------- | ---------------- |
+| 00-03    | 4        |           | 属性类型             |
+| 04-07    | 4        |           | 该属性的总长度(属性头+属性体) |
+| 08       | 1        | 00        | 是否为常驻属性，00表示为常驻  |
+| 09       | 1        | 00        | 属性名的长度，00表示没有属性名 |
+| 0A-0B    | 2        | 1800      | 属性名开始的偏移         |
+| 0C-0D    | 2        | 00        | 标志               |
+| 0E-0F    | 2        | 00        | 标识               |
+| 10-13    | 4        | Length    | 属性体的长度           |
+| 14-15    | 2        | 18        | 属性体开始的偏移         |
+| 16       | 1        |           | 索引标志             |
+| 17       | 1        |           | 填充               |
+| 18       | Length   |           | 属性体开始            |
+
+- 非常驻属性的属性头
+
+| 偏移(16进制) | 长度   | 常用值  | 含义               |
+| -------- | ---- | ---- | ---------------- |
+| 00-03    | 4    |      | 属性类型             |
+| 04-07    | 4    |      | 属性长度             |
+| 08       | 1    | 01   | 是否常驻属性，01表示是常驻属性 |
+| 09       | 1    | 00   | 属性名长度            |
+| 0A-0B    | 2    |      | 属性名开始的偏移量        |
+| 0C-0D    | 2    |      | 压缩、加密、稀疏标志       |
+| 0D-0E    | 2    |      | 属性ID             |
+| 10-17    | 8    |      | 起始虚拟簇号VCN        |
+| 18-1F    | 8    |      | 结束虚拟簇号VCN        |
+| 20-21    | 2    | 40   | Data run的偏移地址    |
+| 22-23    | 2    |      | 压缩单位的大小，2的N次方    |
+| 24-27    | 4    |      | 不使用              |
+| 28-2F    | 8    |      | 属性分配大小           |
+| 30-3F    | 8    |      | 属性的实际大小          |
+| 38-3F    | 8    |      | 属性的原始大小          |
+| 40       |      |      | Data run 的信息     |
+
+
+
+#### 属性内容
+
+​	属性的内容可以是任意格式任意大小。例如，一种属性被用存储文件的内容，所以其大小可能是几个MB乃至数个GB。将这么多的数据存储在仅仅有1024个字节大小的MFT entry中是不切实际的。为了解决这个问题，NTFS提供了两种存储属性内容的位置。常驻属性将它的内容和头部一同存储在MFT entry当中。这仅仅适用于小属性，非常驻属性将其内容存储在文件系统的簇当中。属性的头部中标识了这个属性是常驻属性还是非常驻属性。如果一个属性是常驻的，则其内容紧跟头部。如果一个属性是非常驻的，头部将会给出簇地址。
+
+​	非常驻属性会被保存在cluster runs当中，由连续的簇构成，而每一个run由起始簇地址和run长度来描述。例如，如果一个属性分配了48、49、50、51和52这几个簇，则它有一个run，这个run开始于簇48，长度为5.如果这个属性还分配了簇80和81，则它有第二个run，起始于80长度为2。第三个run可能起始于簇56长度为4.如下图所示：
+
+![image](https://images0.cnblogs.com/blog/646229/201501/312253088474636.png)
+
+​	NTFS使用了VCN到LCN的映射来描述非常驻属性的run。上图中，这个属性run显示了VCN地址0-4映射到了LCN地址48-52, VCN地址5-6映射到了LCN地址80-81，VCN地址7-10映射到了LCN地址56-59。
+
+
+
+### 标准属性类型
+
+​	每一种属性类型都被定义了一个编号，微软使用这个编号对一个entry中的属性进行排序。标准属性被赋予了缺省的类型值，但我们可以在\$AttrDef文件系统元文件中重定义。除了编号之外，每一个属性类型有一个名字，都是大写并且以“\$”开头。几乎每一个被分配的MFT entry都有\$FILE_NAME和\$STANDARD_INFORMATION类型的属性。每一个文件都有一个\$DATA属性，其包含有文件的内容。如果内容尺寸超过大约700字节，他就会变成一个非常驻属性，保存到到外面的簇中。当一个文件含有多于一个\$DATA 属性时，这些多出的属性有时被称为附加数据流(alternate data streams，ADS)。当创建文件时创建的缺省\$DATA并没有名字，但是多出的\$DATA属性必须有。注意属性名字和类型名字是不同的。例如，\$DATA是属性类型名，属性的名字可能是“fred”。
+
+​	每一个目录都有一个\$INDEX_ROOT属性，这个属性含有其包含的文件和目录的信息。如果这个目录很大，\$INDEX_ALLOCATION和\$BITMAP属性也用于存储信息。令事情更加复杂的是，一个目录也可以在\$INDEX_ROOT之外还含有额外的\$DATA属性。也就是说，目录可以同时存储文件内容和其所包含的文件和子目录的列表。\$DATA属性可以存储应用程序或者是用户想要存储的任何数据。一个用户的\$INDEX_ROOT和\$INDEX_ALLOCATION属性通常其名字是`$I30`。
+
+
+
+#### 基础MFT entry
+
+​	一个文件最多可以有65536个属性（由于标识符是16位的），所以其可能需要多于一个MFT entry来保存它的所有的属性的头部（即便是非常驻属性也需要它们的头部保存在MFT entry内部）。当附加的MFT entry被分配给一个文件的时候，原来的MFT entry被称为基础MFT entry。非基础entry会在它们的MFT entry域中保存有基础MFT entry的地址。
+
+​	基础MFT entry有一个\$ATTRIBUTE_LIST类型的属性，这个属性含有文件的每一个属性和MFT地址，以便于查找到它们。非基础MFT entry没有\$FILE_NAME和\$STANDARD_INFORMATION属性。
+
+
+
+稀疏属性
+
+NTFS可以降低文件的空间需求，这是通过将某些非常驻$DATA属性的数据保存为稀疏来实现的。稀疏属性是那些全为零的簇没有写入磁盘的属性。作为替代，一个特殊的run用来保存零簇（译注：含有全零数据的簇）。一般来说，一个run含有起始簇位置和长度，但是一个稀疏run只含有长度没有起始位置。有一个标志指出一个属性是稀疏的。
+
+例如，假设一个文件占用了12个簇。起始的五个簇非零，接下来的三个簇都是零，最后的四个簇非零。当它保存为一个普通的属性，一个长度为12的run将会被创建出来以保存这个文件，如图11.8A所示。当保存为稀疏属性，将会有三个run被创建出来，并且只有9个簇被实际分配，如下图所示。
+
+一个12簇长的文件被保存为（A）普通布局或，（B）稀疏布局，有三个簇在稀疏run中：
+
+![image](https://images0.cnblogs.com/blog/646229/201501/312312583949448.png)
+
+
+
 
 
 
@@ -714,28 +755,7 @@ typedef struct {
 >
 > ​	FAT的文件分配表只列出了每一个文件的名称以及起始簇，并没有说明这个文件是否存在，而需要通过其所在的文件夹的记录来判断，而文件夹入口又包含在文件分配表的索引当中。因此访问文件的时候，首先要读取文件分配表来确定文件是否存在，然后再次读取文件分配表找到文件的首簇，接着以链式的检索找到文件的所有存放簇，最终确定后才可以访问。
 
-​	文件中的每个记录都是由属性组成。每个属性由相同的格式构成，首先是一个标准属性记录头，然后存放属性的专用数据。下面列出$AttrDef中定义的可用到的属性。
 
-| 类型    | 操作系统 | 描述                     |
-| ----- | ---- | ---------------------- |
-| 0x10  |      | STANDARD_INFORMATION   |
-| 0x20  |      | ATTRIBUTE_LIST         |
-| 0x30  |      | FILE_NAME              |
-| 0x40  | NT   | VOLUME_VERSION         |
-| 0x40  | 2K   | OBJECT_ID              |
-| 0x50  |      | SECURITY_DESCRIPTOR    |
-| 0x60  |      | VOLUME_NAME            |
-| 0x70  |      | VOLUME_INFORMATION     |
-| 0x80  |      | DATA                   |
-| 0x90  |      | INDEX_ROOT             |
-| 0xA0  |      | INDEX_ALLOCATION       |
-| 0xB0  |      | BITMAP                 |
-| 0xC0  | NT   | SYMBOL_LINK            |
-| 0xC0  | 2K   | REPARSE_POINT          |
-| 0xD0  |      | EA_INFORMATION         |
-| 0xE0  |      | EA                     |
-| 0xF0  | NT   | PROPERTY_SET           |
-| 0x100 | 2K   | LOGGED_UNTILITY_STREAM |
 
 ##### MFT布局
 
@@ -745,7 +765,7 @@ typedef struct {
 
 ### NTFS 中建立文件的过程
 
-​	假设我们要加里一个文件“\子目录1\file.txt”,假设子目录1已经存在于根目录下。要建立的文件的大小为7000个字节，每一个簇的大小为4096个字节。
+​	假设我们要加里一个文件“\子目录1\file.txt”,假设子目录1已经存在于根目	录下。要建立的文件的大小为7000个字节，每一个簇的大小为4096个字节。
 
 1. 读取文件系统的第一个扇区的引导扇区，获取簇的大小， MFT的起始位置以及每一个MFT项的大小。
 2. 读取第一个MFT项，即\$MFT文件的MFT项，由他的\$DATA属性获取其他的MFT的位置。
