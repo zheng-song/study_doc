@@ -56,7 +56,7 @@ typedef struct{
 }NONRESIDENT_ATTRIBUTE, *PNONRESIDENT_ATTRIBUTE;
 ```
 
-#### AttributeStandardInformation（10H）
+#### AttributeStandardInformation（10）
 
 ![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_9.png)
 
@@ -79,7 +79,7 @@ typedef struct{
 }STANDARD_INFORMATION, *PSTANDARD_INFORMATION;
 ```
 
-#### AttributeAttributeList（20H）
+#### AttributeAttributeList（20）
 
 ​	当一个文件需要好几个文件记录的时候，才会需要20H属性。20H属性记录了一个文件的下一个文件记录的位置。如下：
 
@@ -98,7 +98,7 @@ typedef struct{
 }ATTRIBUTE_LIST, *PATTRIBUTE_LIST;
 ```
 
-#### AttributeFileName(30H)
+#### AttributeFileName(30)
 
 ​	用于存储文件名，是常驻属性，最少68字节，最大578字节，可容纳最大unicode字符的文件名长度。
 
@@ -125,7 +125,7 @@ typedef struct{
 
   文件名属性必须是resident
 
-#### AttributeObjectId
+#### AttributeObjectId(40)
 
 ```c++
 typedef struct{
@@ -141,19 +141,15 @@ typedef struct{
 }OBJECTID_ATTRIBUTE, *POBJECTID_ATTRIBUTE;
 ```
 
-- 备注：
-
-  The object identifier attribute is always resident.
-
-#### AttributeSecurityDescriptor
+#### AttributeSecurityDescriptor(50)
 
 安全描述属性作为一个标准自持的(self-relative)安全描述存储在磁盘上。在NTFS3.0 格式的卷上，这个属性通常不存在于MFT条目当中。
 
-#### AttributeVolumeName
+#### AttributeVolumeName(60)
 
 卷名(volume name)属性仅仅包含一个Unicode编码的字符串volume label。
 
-#### AttributeVolumentInformation
+#### AttributeVolumentInformation(70)
 
 ```c++
 typedef struct {
@@ -519,41 +515,41 @@ NTFS中第一个扇区DBR是一个文件，也是\$ROOT文件的第一个扇区�
 
 - 常驻属性的属性头
 
-| 偏移(16进制) | 长度(Byte) | 常用值(16进制) | 含义               |
-| -------- | -------- | --------- | ---------------- |
-| 00-03    | 4        |           | 属性类型             |
-| 04-07    | 4        |           | 该属性的总长度(属性头+属性体) |
-| 08       | 1        | 00        | 是否为常驻属性，00表示为常驻  |
-| 09       | 1        | 00        | 属性名的长度，00表示没有属性名 |
-| 0A-0B    | 2        | 1800      | 属性名开始的偏移         |
-| 0C-0D    | 2        | 00        | 压缩、加密、稀疏标志       |
-| 0E-0F    | 2        | 00        | 属性ID             |
-| 10-13    | 4        | Length    | 属性体的长度           |
-| 14-15    | 2        | 18        | 属性体开始的偏移         |
-| 16       | 1        |           | 索引标志             |
-| 17       | 1        |           | 填充               |
-| 18       | Length   |           | 属性体开始            |
+| 偏移(16进制) | 长度(Byte) | 常用值(16进制)         | 含义                     |
+| -------- | -------- | ----------------- | ---------------------- |
+| 00-03    | 4        |                   | 属性类型                   |
+| 04-07    | 4        | 48 00 00 00(72字节) | 该属性的总长度(属性头+属性体)       |
+| 08       | 1        | 00                | 是否为常驻属性，00表示为常驻        |
+| 09       | 1        | 00                | 属性名的长度，长度为2*NameLength |
+| 0A-0B    | 2        | 1800              | 属性名开始的偏移               |
+| 0C-0D    | 2        | 00                | 压缩、加密、稀疏标志             |
+| 0E-0F    | 2        | 00                | 属性ID                   |
+| 10-13    | 4        | Length            | 属性体的长度                 |
+| 14-15    | 2        | 18                | 属性体开始的偏移               |
+| 16       | 1        |                   | 索引标志                   |
+| 17       | 1        |                   | 填充                     |
+| 18       | Length   |                   | 属性体开始                  |
 
 - 非常驻属性的属性头
 
-| 偏移(16进制) | 长度   | 常用值  | 含义                |
-| -------- | ---- | ---- | ----------------- |
-| 00-03    | 4    |      | 属性类型              |
-| 04-07    | 4    |      | 属性长度              |
-| 08       | 1    | 01   | 是否常驻属性，01表示是非常驻属性 |
-| 09       | 1    | 00   | 属性名长度             |
-| 0A-0B    | 2    |      | 属性名开始的偏移量         |
-| 0C-0D    | 2    |      | 压缩、加密、稀疏标志        |
-| 0D-0E    | 2    |      | 属性ID              |
-| 10-17    | 8    |      | 起始虚拟簇号VCN         |
-| 18-1F    | 8    |      | 结束虚拟簇号VCN         |
-| 20-21    | 2    | 40   | Data run的偏移地址     |
-| 22-23    | 2    |      | 压缩单位的大小，2的N次方     |
-| 24-27    | 4    |      | 不使用               |
-| 28-2F    | 8    |      | 属性分配大小            |
-| 30-3F    | 8    |      | 属性的实际大小           |
-| 38-3F    | 8    |      | 属性的原始大小           |
-| 40       |      |      | Data run 的信息      |
+| 偏移(16进制) | 长度   | 常用值           | 含义                |
+| -------- | ---- | ------------- | ----------------- |
+| 00-03    | 4    |               | 属性类型              |
+| 04-07    | 4    |               | 属性长度              |
+| 08       | 1    | 01            | 是否常驻属性，01表示是非常驻属性 |
+| 09       | 1    | 00            | 属性名长度             |
+| 0A-0B    | 2    |               | 属性名开始的偏移量         |
+| 0C-0D    | 2    |               | 压缩、加密、稀疏标志        |
+| 0D-0E    | 2    |               | 属性ID              |
+| 10-17    | 8    |               | 起始虚拟簇号VCN         |
+| 18-1F    | 8    |               | 结束虚拟簇号VCN         |
+| 20-21    | 2    | 40(即从第64字节开始) | Data run的偏移地址     |
+| 22-23    | 2    |               | 压缩单位的大小，2的N次方     |
+| 24-27    | 4    |               | 不使用               |
+| 28-2F    | 8    |               | 属性分配大小            |
+| 30-3F    | 8    |               | 属性的实际大小           |
+| 38-3F    | 8    |               | 属性的原始大小           |
+| 40       |      |               | Data run 的信息      |
 
 
 
