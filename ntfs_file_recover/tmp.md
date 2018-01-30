@@ -54,7 +54,7 @@
 
 ## 1. MBR
 
-​	假设文件的存储位置为`F:\git\myDocument\NTFS.md`,接下来我们一层层的定位这个文件，首先使用winhex打开F盘。
+​	假设文件的存储位置为`F:\git\myDocument\lara.pptx`,接下来我们一层层的定位这个文件，首先使用winhex打开F盘。
 
 ![MBR](http://img.blog.csdn.net/20180129105140093?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
@@ -112,14 +112,110 @@
 ![90属性](http://img.blog.csdn.net/20180129184938691?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
 - `0x04`表示属性名的长度为0x04*2=8Byte. `0x18`表示属性名的偏移地址为0x18.
-- `0xA8 00 00 00`表示属性体的长度为0xA8，`0x00 20`表示属性体的偏移量为0x20。
-- `24 00 49 00 33 00 30 00`表示属性名为$I30.接下来是90属性的属性体。
-- `0x00 00 00 30`表示索引根的属性类型，`0x00 00 00 01`为排序规则。
-- `0x00 00 10 00`表示的是索引项分配的大小(单位为字节)为4096字节，`0x01`表示每个索引记录的簇数为1个，正好对应索引项的大小为4096字节。
-- `0x00 00 00 10`表示第一个索引项的偏移量为16字节。
-- `0x00 00 00 98`表示索引项的总大小为0x98=152. 接下来的`0x00 00 00 98`表示索引项的分配大小。
-- `0x01`为索引标志， 00表示Small directory，01表示Large directory。
-- `57 BB 00 00 00 00 03 00`为文件的MFT参考号，前24位`0x00 00 00 00 BB 57`为该MFT的记录编号。在该MFT处(0xC0 00 00 00 + 0x400*0xBB57 = 0xC2 ED 5C 00)可以看到内容如下图所示。
-- `0x00 70`表示的是索引项的大小为112. `0x00 58`表示文件名的偏移。
 
-![90](http://img.blog.csdn.net/20180129191139622?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)	
+- `0xA8 00 00 00`表示属性体的长度为0xA8，`0x00 20`表示属性体的偏移量为0x20。
+
+- `24 00 49 00 33 00 30 00`表示属性名为$I30.接下来是90属性的属性体。
+
+- `0x00 00 00 30`表示索引根的属性类型，`0x00 00 00 01`为排序规则。
+
+- `0x00 00 10 00`表示的是索引项分配的大小(单位为字节)为4096字节，`0x01`表示每个索引记录的簇数为1个，正好对应索引项的大小为4096字节。
+
+- `0x00 00 00 10`表示第一个索引项的偏移量为16字节。
+
+- `0x00 00 00 98`表示索引项的总大小为0x98=152. 接下来的`0x00 00 00 98`表示索引项的分配大小。
+
+- `0x01`为索引标志， 00表示Small directory，01表示Large directory。
+
+- `57 BB 00 00 00 00 03 00`为文件的MFT参考号，前24位`0x00 00 00 00 BB 57`为该MFT的记录编号，可以用来定位这个文件。在该MFT处(0xC0 00 00 00 + 0x400*0xBB57 = 0xC2 ED 5C 00)可以看到内容如下图所示。
+
+- `0x00 70`表示的是索引项的大小为112. `0x00 58`为索引标志，`0x00 01`表示此索引包含一个子节点，若为0表示此为最后一项。
+
+- `05 00 00 00 00 00 05 00`为父目录的MFT、参考号，前6B为0x05表示此文件的父目录为根目录
+
+- 接下来的四项分别是创建、文件修改、MFT修改、最后访问时间。
+
+- `0x1D 40 00`为分配的空间，`0x1D 30 92`为实际使用的空间。
+
+- `20 00 00 00 00 00 00 00`为文件标识，`0B`为文件名长度为11*2 字节，`00`为文件名命名空间。
+
+- 接下来的22个字节是文件名的UNICODE编码，`4300 0768 C651 935E 906E E34E 0178 2E00 7A00 6900 7000`对应的正好是我的F盘下的 “C标准库源代码.zip” 这个文件的UNICODE编码。也就是说这个文件是NTFS的B+数的根节点。
+
+  ![90](http://img.blog.csdn.net/20180129191139622?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+
+
+#### A0属性
+
+​	此处90属性之后是A0属性，90属性存储的是索引根节点的信息，而A0属性存储着组成索引的B+树目录索引子节点的定位信息。A0属性由属性头和运行列表组成，一般指向一个或者是多个目录(INDEX文件，即4K的缓存)，它总是常驻属性。A0属性和90属性共同描述了磁盘文件和目录的MFT记录的位置。第五项MFT的A0属性记录根目录的位置。
+
+![A0属性](http://img.blog.csdn.net/20180130141644960?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+- `0x00 00 00 50`表示该属性的长度为0x50。`0x01`表示该属性是非常驻属性，`0x04`表示属性名的长度为4*2=8Byte, `0x00 40`表示属性名的偏移。`0x00 08`是属性的ID
+
+- `00 00 00 00 00 00 00 00`为起始的VCN，`01 00 00 00 00 00 00 00 `为结束的VCN，即占用两个簇。
+
+- `48 00`表示run list的偏移为0x48，接下来的三个`00 20 00 00 00 00 00 00 `分别是分配的大小，实际使用的大小，原始的大小。
+
+- `24 00 49 00 33 00 30 00`为属性名，表示`$ I 3 0 `
+
+- `31 02 DF 51 09`为run list。根据run list 的特殊计算方式，31代表后面的3+1个字节是run list的内容，第一个字节的低位1代表后面的一个字节表示簇数，即`02`代表簇数为2个。第一个字节的高位3代表后三字节为簇偏移量，即`DF 51 09`代表起始的簇号为`0x09 51 DF = 610783(簇) =2501767168(Byte)=0x951D F000 `,即相对文件系统的偏移为0x951D F000的位置。下面我们转到这个位置。
+
+
+
+
+####索引的位置
+
+​	根目录的索引节点由索引头和一个个的索引项构成，**其中一个个索引项和根目录中的每一个文件或者目录相对应**。这些索引项的文件名就是根目录中的文件或者目录的名称。我们现在要找的是根目录下目录名为git的索引项。
+
+​	由之前的A0属性中我们得知了索引子节点的run list占用两个簇，因此我们需要遍历这两个簇来查找目录git的索引项，先从0x951D F000(第一个簇的位置)的位置开始遍历，没找到这个目录，因此这一个簇的图就不放出，接下来遍历第二个簇的位置0x951D E000开始的位置，如下图所示：
+
+![INDEX](http://img.blog.csdn.net/20180130163054482?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+- 从E000-E030的内容是标准的索引头部，剩下的每一个颜色块代表一个索引项。
+- 关注黄色的git目录的索引块的内容，`7D 05 01 00 00 00 06 00`是git目录的MFT参考号，其中`0x1057D`是MFT记录号，跳到这个记录的位置，0xC000 000 + 0x1057D*0x400 = 0xC755 F400.
+
+#### git目录的MFT文件
+
+![gitMFT](http://img.blog.csdn.net/20180130171055776?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+如图所示为git目录的MFT的内容，400-438为位置的内容为MFT标准头部的信息，不在介绍。剩下的每一个颜色块的内容为一个属性。我们关心的是他的90属性的内容。重点讲解这个。
+
+![git90属性](http://img.blog.csdn.net/20180130173819806?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+- 从520-540的部分为标准属性头部，540-560为索引根和索引头的结构。
+- 560-5C8是第一个索引项的内容，5C8-628是第二个索引项的内容，因为我的git目录下只有两个目录，所以只有这两个索引项。
+- 下面关注的就是myDocument这个索引项，从上图我们可以看到这个文件的MFT参考号为`7E D5 01 00 00 00 06 00`，所以MFT号为0x1D57E。定位到这个MFT号的位置，0xC000 000 + 0x1 D57E*0x400 = 0xC755 F800.
+
+#### myDocument目录的MFT
+
+![myDocumentMFT](http://img.blog.csdn.net/20180130184844062?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+从上图我们可以看到myDocument的MFT中有6个属性，我们关心的是其90属性和A0属性。
+
+***此处的90属性没有记录什么有用的信息，我们什么时候应该看90属性，什么时候看A0属性?***
+
+
+
+![A0属性](http://img.blog.csdn.net/20180130190405986?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+​	查看A0属性，此处的A0属性是非常驻属性。属性大小为0x50，属性名为`24 00 49 00 33 00 30 00`即“\$ I 3 0 ”. run list为`41 01 70 C9 A2 00 00 00`,根据run list的规则，占用的空间为1簇， 起始的簇号为0xA2C970。定位到这个簇的位置。即offset的位置为：0xA2 C970 *0x8 * 0x200(512B) = 0xA 2C97 0000.
+
+#### myDocument目录下文件索引的位置
+
+![Index](http://img.blog.csdn.net/20180130192906832?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+如上图所示，每一个颜色块代表的是一个索引项，由上一个MFT中的内容我们知道这个索引块占用一个簇，我们需要遍历这个簇来找到lora.pptx文件的索引，它不在上面这幅图中，我们找到这个索引的位置如下。
+
+![Index](http://img.blog.csdn.net/20180130194952452?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+其中黄色的区域即为lora.pptx文件的索引，从这块区域中我们可以得到lora.pptx文件的MFT参考号为`17 F2 05 00 00 00 01 00`,父目录的参考号为`7E D5 01 00 00 00 06 00`.定位到"lora.pptx"文件的位置:0xC000 0000 + 0x5F217 * 0x400 = 0xD7C8 5C00。
+
+在此位置没有找到记录？？？？？
+
+
+
+
+
+
+

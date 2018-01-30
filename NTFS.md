@@ -162,7 +162,9 @@ typedef struct {
 
 #### AttributeData(80H)
 
-Data 属性容纳着文件的内容，文件的大小一般指的就是未命名的数据流的大小。该属性没有最大最小限制，最小情况是该属性为常驻属性。最复杂的情况是为非常驻属性。一个示例如下：
+​	Data 属性容纳着文件的内容(未命名数据流)，文件的大小一般指的就是未命名的数据流的大小。该属性没有最大最小限制，最小情况是该属性为常驻属性。最复杂的情况是为非常驻属性。它的结构为属性头加上数据流，如果数据流太大，则标记为非常驻，以运行的方式索引到外部。例如找一个MP3文件，它的MFT项中的80属性中可以看到它一定是非常驻的，它的运行所指向的一系列簇就是音乐文件的数据流。
+
+一个示例如下：
 
 ![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_12.png)
 
@@ -171,7 +173,9 @@ Data 属性容纳着文件的内容，文件的大小一般指的就是未命名
 
 #### AttributeIndexRoot(90H)
 
-​	  90H属性是索引根属性，该属性是实现NTFS的B+树索引的根节点，它总是常驻属性。如下图：
+​	  90H属性是索引根属性，是实现NTFS的B+树索引的根节点，它总是常驻属性。索引根属性由属性头、索引根和索引项组成。属性头是通用属性头的常驻部分。
+
+如下图：
 
 ![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_13.png)
 
@@ -192,9 +196,38 @@ typedef struct {
   ATTRIBUTE_TYPE Type;	// 4B 属性类型
   ULONG CollationRule;	// 4B 排序规则
   ULONG BytesPerIndexBlock;	// 4B 索引项分配大小
-  ULONG ClustersPerIndexBlock; // 每索引记录的簇数
+  UCHAR ClustersPerIndexBlock; // 每索引记录的簇数
+  UCHAR noUse[3];
   DIRECTORY_INDEX DirectoryIndex;
 } INDEX_ROOT, *PINDEX_ROOT;
+
+typedef struct{
+  ULONG firstIdxOffset; // 第一个索引项的偏移
+  ULONG IdxTotalsize; // 索引项的总大小
+  ULONG IdxAllocSize;	// 索引项的分配大小
+  UCHAR Flags; //0x00 = Small directory, 0x01 = Large directoty
+  UCHAR noUse[3];
+}DIRECTOTY_INDEX, *PDIRECTOTY_INDEX;
+
+typedef struct {
+  ULONGLONG MFTnum;//文件的MFT参考号，前6B是改文件的MFT编号，用于定位此文件
+  USHORT ItemLen;//索引项的大小
+  UCHAR IdxIdentifier[2];//索引标志
+  UCHAR IsNode[2];//1--此索引包含一个子节点，0--此为最后一项
+  UCHAR noUse[2];//填充
+  ULONGLONG FMFTnum;//父目录的MFT参考号，0x05表示根目录。
+  ULONGLONG	CreateTime;
+  ULONGLONG FileModifyTime;
+  ULONGLONG	MFTModifyTime;
+  ULONGLONG LastVisitTime;
+  ULONGLONG	FileAllocSize;
+  ULONGLONG FileRealSize;
+  UCHAR FileIdentifier[8];//文件标识
+  UCHAR FileNameLen;//文件名长度F
+  UCHAR FileNameSpace;//文件名命名空间
+  //---0x52--- 文件名，长度为2F，并在其后填充到8字节
+  ULONGLONG NextItemVCN；
+}INDEXITEM,*PINDEXITEM;
 ```
 
 - 备注
@@ -203,7 +236,9 @@ typedef struct {
 
 #### AttributeIndexAllocation(A0H)
 
-​	A0属性是索引分配属性，也是一个索引的基本结构，存储着组成索引的基本结构，存储着组成索引的B+树目录索引子节点的定位信息。它总是常驻属性。如下示例：
+​	A0属性是索引分配属性，存储着组成索引的B+树目录索引子节点的定位信息。A0属性由属性头和运行列表组成，一般指向一个或者是多个目录(INDEX文件，即4K的缓存)，它总是常驻属性。A0属性和90属性共同描述了磁盘文件和目录的MFT记录的位置。第五项MFT的A0属性记录根目录的位置。
+
+如下示例：
 
 ![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_17.png)
 
@@ -237,19 +272,6 @@ typedef struct{
 
   index allocation属性是一个块索引数组(an array of index blocks).每一个块索引以一个INDEX_BLOCK_HEADER结构开始，之后是一个DIRCETORY_ENTRY结构序列。
 
-#### DIRECROTY_INDEX
-
-![image](http://www.blogfshare.com/wp-content/uploads/images/NTFS_7E72/image_thumb_15.png)
-
-```c++
-typedef struct{
-  ULONG EntriesOffset; // 每一个索引项的偏移
-  ULONG IndexBlockLength; // 索引项的总大小
-  ULONG AllocatedSize;	// 索引项的分配大小
-  ULONG Flags; //0x00 = Small directory, 0x01 = Large directoty
-}DIRECTOTY_INDEX, *PDIRECTOTY_INDEX;
-```
-
 #### DIRECTOTY_ENTRY
 
 ```c++
@@ -262,6 +284,8 @@ typedef struct{
 // ULONGLONG Vcn; // VCN in IndexAllocation of earlier entries
 } DIRECTORY_ENTRY, *PDIRECTORY_ENTRY;
 ```
+
+
 
 - 备注：
 
@@ -305,6 +329,128 @@ typedef struct {
 // UCHAR EaData[];
 } EA_ATTRIBUTE, *PEA_ATTRIBUTE;
 ```
+
+
+
+####  索引头部
+
+```
+typedef struct {
+	UCHAR Mark[4];			// 标志为"INDX"
+	USHORT UsnOffset;		//更新序列的偏移
+	USHORT UsnUpdateArrSize; //更新序列数组的大小
+	UCHAR LSN[8];//日志文件序列号
+	ULONGLONG VcnIndex;//本索引缓存在分配索引中的VCN
+	ULONG ItemOffset;//第一索引项的偏移
+	ULONG ItemSize;//索引项的实际大小(B)
+	ULONG ItemAllocSize;//索引项的分配大小(B，不包括头部)，略小于4K
+	UCHAR IsNode;//是节点则为1，否则表示有子节点。
+	UCHAR Nouse[3];//填充
+//	UCHAR USN[2 * UsnUpdateArrSize];    //此处有一个使用上面的UsnUpdateArrSize*2大小的字节的USN号
+};
+```
+
+​	索引头部之后的内容就是索引项，索引项的结构和上面0x90属性中介绍的ItemIndex是一致的，每一项代表的是一个文件或者是目录的MFT项，通过项的MFT记录号皆可以计算出MFT项的磁盘地址，他等于\$MFT的偏移地址+编号*0x400,以此可以找到该索引项对应的文件或者是子目录。
+
+```
+typedef struct {
+  ULONGLONG MFTnum;//文件的MFT参考号，前6B是改文件的MFT编号，用于定位此文件
+  USHORT ItemLen;//索引项的大小
+  UCHAR IdxIdentifier[2];//索引标志
+  UCHAR IsNode[2];//1--此索引包含一个子节点，0--此为最后一项
+  UCHAR noUse[2];//填充
+  ULONGLONG FMFTnum;//父目录的MFT参考号，0x05表示根目录。
+  ULONGLONG	CreateTime;
+  ULONGLONG FileModifyTime;
+  ULONGLONG	MFTModifyTime;
+  ULONGLONG LastVisitTime;
+  ULONGLONG	FileAllocSize;
+  ULONGLONG FileRealSize;
+  UCHAR FileIdentifier[8];//文件标识
+  UCHAR FileNameLen;//文件名长度F
+  UCHAR FileNameSpace;//文件名命名空间
+  //---0x52--- 文件名，长度为2F，并在其后填充到8字节
+  //ULONGLONG NextItemVCN；
+}INDEXITEM,*PINDEXITEM;
+```
+
+
+
+
+
+#### 搜索一个已删除的文件或者是目录的MFT项
+
+​	一个文件的MFT项的地址等于\$MFT的地址+MFT编号*0x400，如果目录中的对应项删除了，那么可以从MFT的首部开始搜索，因为MFT一般是连续的，而一个MFT项的大小又是固定的，一项项读取，找到各自的0x30属性，解析出文件名，进行比较(MFT中有一些空白区域需要跳过)。
+
+
+
+#### 备注：
+
+##### 1.关于文件名
+
+一般文件名的前一个字节是文件名的命名空间，不管是在INDEX文件中，还是在0x30属性中。
+
+- 0x00----POSIX，最大命名空间，大小写敏感，支持除了`\0`和`/`的所有Unicode字符，最大255字符。
+- 0x01----Win32，是POSIX的子集，不支持字符:`* / < > | \ : ? `,不能用句点或空格结束
+- 0x02----DOS，是Win32的子集，字符必须要比空格0x20大，文件名为1~8个字符，然后句点分割接后缀扩展名1~3个字符。
+- 0x03----DOS&Win32，必须要兼容Win32和DOS命名方式。
+
+ 在INDX文件中，经常可以看到含有0x02和0x03或者0x01的两个不同命名空间、相同MFT编号的项，也就是说这两个目录项指向同一个记录，同样的在这个文件的MFT项中也有两个0X30属性，其中一个是0x01或0x03，表示的是完整的文件名；另一个是0x02，DOS命名方式，它是一个短文件名，它在我们命名的基础上，截断 '.' 之前的超出6个字符的所有字符，只剩前6个，之后接上"~1" ，这样正好8个字符，当然后面的句点和扩展名保留。另外，它必须满足DOS命名规则，必须大写，删除禁止使用的字符等等。如果文件名重复了，在 "~1" 基础上递增，"~2","~3"等等。检索比对时，我们自然要使用前者。
+
+##### 2. 关于字符集
+
+字符集是字符在计算机上的编码方式，可以看成一种协议，一种约定规则，我们处理一串二进制数所代表的字符时，必须清楚它用的是哪一种编码方式；
+
+在windows系统中文件的命名是固定用两个字节表示一个字符，在MFT中可以发现英文文件名字符之间都填充一个 '\0' ，这是宽字符集与变长字符集兼容，
+
+在宽字符集中，小于128的字符数值上是等于ASCII码；我们的文件数据一般用的是变长字符集(GB2312等等)；
+
+为了比较输入的文件名和NTFS中的文件名，我们必须要先转换；
+
+两个WinAPI 函数，用于宽字符和变长字符转换
+
+```c++
+// 函数原型
+int WideCharToMultiByte(
+            UINT     CodePage,            // code page
+            DWORD    dwFlags,            // performance and mapping flags
+            LPCWSTR  lpWideCharStr,     // address of wide-character string
+            int      cchWideChar,        // number of characters in string
+            LPSTR    lpMultiByteStr,        // address of buffer for new string
+            int      cchMultiByte,        // size of buffer
+            LPCSTR   lpDefaultChar,        // address of default for unmappable 
+                                       　　 // characters
+            LPBOOL   lpUsedDefaultChar    // address of flag set when default 
+                                        // char. used
+);
+int MultiByteToWideChar(
+            UINT   CodePage,         // code page
+            DWORD  dwFlags,         // character-type options
+            LPCSTR lpMultiByteStr, // address of string to map
+            int    cchMultiByte,      // number of bytes in string
+            LPWSTR lpWideCharStr,  // address of wide-character buffer
+            int    cchWideChar        // size of buffer
+);
+
+//--- WCHAR 定义在tchar.h中 ----
+void charTest()
+{
+    TCHAR    tc1[16] ;　　//=  _T("后来");
+    WCHAR    tc2[8] = {0x540E, 0x6765, 0, 0, 0, 0, 0, 0};
+//    memset(tc2, 0, 20);
+//  MultiByteToWideChar(CP_ACP, 0, tc1, 4, (LPWSTR)tc2, 4);
+    WideCharToMultiByte(CP_ACP, 0 ,(WCHAR*)tc2, 2, tc1, sizeof(tc1), 0, 0);　　
+    
+    cout<<"tc1 "<<tc1<<sizeof(tc1)<<" "<<strlen(tc1)<<endl;
+    PrintHex(tc1);
+    cout<<endl;
+    cout<<"tc2 "<<sizeof(tc2)<<" "<<wcslen((LPWSTR)tc2)<<endl;
+    PrintHex(tc2);
+    cout<<endl;
+}
+```
+
+
 
 
 
