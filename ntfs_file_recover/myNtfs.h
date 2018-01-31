@@ -3,24 +3,26 @@
 
 /* NTFS RECORD HEADER */
 typedef struct {             // 16B
-	ULONG Type;              // NTFS记录的类型，FILE/BAAD/INDX/CHKD/HOLE
-	USHORT UsaOffset;        // Update Sequence Array 在该结构中的偏移量
-	USHORT UsaCount;         // usa 中值的个数
-	USN Usn;                 // The Update Sequence Number of the NTFS record
+	ULONG Type;              // NTFS记录的类型，FILE(46494C45)/BAAD/INDX/CHKD/HOLE
+	USHORT UsaOffset;        // Update Sequence Array：更新序列号偏移(相对文件头部)
+	USHORT UsaCount;         // 更新序列号的数组个数+1(N)，通常为3
+	USN Usn;                 // 日志序列号(LSN)该数值在每一次被修改的时候都会被改动。
 } NTFS_RECORD_HEADER, *PNTFS_RECORD_HEADER;
 
 /* FILE RECORD_HEADER */
 typedef struct {                   // 42B
 	NTFS_RECORD_HEADER Ntfs;       // when Type = FILE
-	USHORT SequenceNumber;         // MFT entry 被重用次数 
+	USHORT SequenceNumber;         // MFT entry 被重用次数  更新序列号(删除一次加1) 
 	USHORT LinkCount;              // The number of directory links to the MFT entry
 	USHORT AttributesOffset;       // 第一个属性在此 MFT entry 中的偏移
-	USHORT Flags;                  // 0x0001 = The MFT entry is InUse, 0x0002 = The MFT entry represents a Directory
+	USHORT Flags;                  // 0x0000=deleted file; 0x0001=file, 0x0002=deleted dir; 0x0003= dir;
 	ULONG BytesInUse;              // 已被该 MFT entry 使用的字节数
 	ULONG BytesAllocated;          // 分配给该 MFT entry 的字节数
-	ULONGLONG BaseFileRecord; /*If the MFT entry contains attributes that overflowed a base MFT entry,
-							  this member contains the file reference number of the base entry; otherwise , it contains zero.*/
-	USHORT NextAttributeNumber;    // The number that will be assigned to the next attribute added to the MFT entry
+	ULONGLONG BaseFileRecord;/*当前文件记录的基本文件记录的索引，如果当前文件记录是基本文件记录则该值为0，否则指向基本文件记录的记录索引。注意该值的低6字节是MFT记录号，高2字节是该MFT记录的序列号。*/
+	USHORT NextAttrID;    	// The number that will be assigned to the next attribute added to the MFT entry
+	UCHAR Unused[2];
+	ULONG MFTRecordNo;			   // 该MFT的记录编号(起始编号0)
+	//ULONGLONG Usa; //更新序列号的位置和大小由前面的 UsaOffset 和UsaCount来决定.
 } FILE_RECORD_HEADER, *PFILE_RECORD_HEADER;
 
 /* 属性类型 */
