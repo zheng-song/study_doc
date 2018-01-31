@@ -20,7 +20,7 @@ typedef struct{
 typedef struct{
   ATTRIBUTE_TYPE AttributeType;
   ULONG Length;
-  BOOLEAN Nonresident;
+  BOOLEAN Nonresident;//true（01） = 非常驻属性
   UCHAR NameLength;
   USHORT NameOffset;
   USHORT Flags;	 //0x0001 = Compressed
