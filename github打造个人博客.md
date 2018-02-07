@@ -77,3 +77,5 @@ hexo server 运行成功以后会打印出如下内容，此时在浏览器中�
 
 ​	hexo初始化之后的默认主题是landscape，我们可以修改这个主题，到[这个地址](https://hexo.io/themes/)里去找一个你喜欢的主题，然后可以跳转到github中下载下来，按照说明来安装即可，我是用的主题是[hueman]()。安装完成以后再执行 `hexo clean && hexo generate && hexo deploy` 。
 
+关于hueman主题的配置可以到[这里](http://www.jianshu.com/writer#/notebooks/22040471/notes/23715025)去看.
+
