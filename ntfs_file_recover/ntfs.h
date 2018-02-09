@@ -2,44 +2,30 @@
 #ifndef NTFS_H_INCLUDED
 #define NTFS_H_INCLUDED
 
-#define _WIN32_WINNT 0x0400
-#define _CRT_SECURE_NO_WARNINGS
-
-#include <windows.h>
-#include <winioctl.h>
-#define BUF_LEN 4096
-#define FSCTL_CREATE_USN_JOURNAL CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 57, METHOD_NEITHER, FILE_ANY_ACCESS) // CREATE_USN_JOURNAL_DATA,
-#define FSCTL_QUERY_USN_JOURNAL CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 61, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define FSCTL_ENUM_USN_DATA CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 44, METHOD_NEITHER, FILE_ANY_ACCESS)
-#define FSCTL_DELETE_USN_JOURNAL  CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 62, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define FSCTL_READ_USN_JOURNAL CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 46, METHOD_NEITHER, FILE_ANY_ACCESS)
-#define FSCTL_READ_FILE_USN_DATA CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 58, METHOD_NEITHER, FILE_ANY_ACCESS)
-#define FSCTL_QUERY_USN_JOURNAL CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 61, METHOD_BUFFERED, FILE_ANY_ACCESS)
-
-
 // **NTFS RECORD HEADER**
 typedef struct {
 	ULONG Type;  		// 4B 'ELIF','XDNI','DAAB','ELOH','DKHC'
-	USHORT UsaOffset;	// 更新序列号数组偏移，校验值地址
-	USHORT UsaCount;	// 1+n 1为校验值个数 n为待替换值的个数 fixup
+	USHORT UsaOffset;	// 更新序列号数组偏移
+	USHORT UsaCount;	// 更新序列号的数组个数+1(N)，通常为3
 	USN Usn; 			//USN == LONLONG 8B 每一次记录被修改，USN都会变化
 }NTFS_RECORD_HEADER, *PNTFS_RECORD_HEADER; // 16B
-
 
 //****FILE RECORD_HEADER****
 typedef struct {
 	NTFS_RECORD_HEADER Ntfs;   	// Ntfs.type 总是'ELIF'
-	USHORT SequenceNumber;		// FileReferenceNumber的高16位  i是低48位 0~total_file_count-1  
-	// 用于记录主文件表记录被重复使用的次数 
+	USHORT SequenceNumber;		// $LogFile Sequence Number  
 	USHORT LinkCount;			// 记录硬连接的数目，只出现在基本文件记录中
 	USHORT AttributeOffset;		// 第一个属性的偏移 
-	USHORT Flags;				// 0x0001 = InUse, 0x0002 = Directory
-	ULONG BytesInUse;			// 记录头和属性的总长度，即文件记录的实际长度文件,即记录在磁盘上实际占用的字节空间。
-	ULONG BytesAllocated;		// 总共分配给记录的长度
-	ULONGLONG BaseFileRecord;	// 基本文件记录中的文件索引号
-	//对于基本文件记录，其值为0，如果不为0，则是一个主文件表的文件索引号，指向所属的基本文件记录中的文件记录号，
-	//在基本文件记录中包含有扩展文件记录的信息，存储在“属性列表ATTRIBUTE_LIST”属性中。
+	USHORT Flags;				// 0x0000=deleted file; 0x0001=file, 0x0002=deleted dir; 0x0003= dir;
+	ULONG BytesInUse;			// 已被该 MFT entry 使用的字节数
+	ULONG BytesAllocated;		// 分配给该 MFT entry 的字节数
+/*当前文件记录的基本文件记录的索引，如果当前文件记录是基本文件记录则该值为0，
+ *否则指向基本文件记录的记录索引。注意该值的低6字节是MFT记录号，高2字节是该MFT记录的序列号。*/
+	ULONGLONG BaseFileRecord;	
 	USHORT NextAttributeNumber;	// 下一属性ID	
+	UCHAR Unused[2];
+	ULONG MFTRecordNo;			   // 该MFT的记录编号(起始编号0)
+//	ULONGLONG Usa; //更新序列号的位置和大小由前面的 UsaOffset 和UsaCount来决定.
 }FILE_RECORD_HEADER, *PFILE_RECORD_HEADER; // 42B
 
 
@@ -93,80 +79,102 @@ typedef enum {
 	AttributeEnd = 0xFFFFFFFF
 } ATTRIBUTE_TYPE, *PATTRIBUTE_TYPE;
 
+/* 文件标准信息属性 */
+typedef struct {
+	ULONGLONG CreationTime;
+	ULONGLONG ChangeTime;
+	ULONGLONG LastWriteTime;
+	ULONGLONG LastAccessTime;
+	ULONG FileAttributes;              // 文件的属性，包括只读0001、隐藏0002、系统0004、加密4000等
+	ULONG AlignmentOrReservedOrUnknown[3];
+	ULONG QuotaId;                     // NTFS 3.0
+	ULONG SecurityId;                  // NTFS 3.0
+	ULONGLONG QuotaCharge;             // NTFS 3.0
+	USN Usn;                           // NTFS 3.0
+} STANDARD_INFORMATION, *PSTANDARD_INFORMATION;
+
 
 typedef struct {
 	ATTRIBUTE_TYPE AttributeType;
 	ULONG AttributeLength; 			//本属性长度（包含属性值）
 	BOOLEAN Nonresident;			//本属性是不是驻留属性 0x00=Resident, 0x01 = NonResident
-	UCHAR NameLength;				//属性名的名称长度
+	UCHAR NameLength;				//属性名的名称长度 长度为2*NameLength
 	USHORT NameOffset;				//属性名偏移
-	USHORT Flags;	 				// 0x00FF=compressed  0x4000=encrypted  0x8000=Sparse
-	USHORT AttributeID;
+	USHORT Flags;	 				// 压缩、加密、稀疏等的标识0x00FF=compressed  0x4000=encrypted  0x8000=Sparse
+	USHORT AttributeID;				// 该属性实例的数字标识符
 }ATTRIBUTE, *PATTRIBUTE;
 
 
 typedef struct {
 	ATTRIBUTE Attribute;
-	ULONG ContentLength; 		//属性值长度   
-	USHORT ContentOffset; 	//属性值偏移   
-//	USHORT Flags; 			// 索引标志 0x0001 = Indexed 和结构图里描述不一致，结构图中为unused  
-	USHORT unused;
+	ULONG ContentLength;	//属性体长度
+	USHORT ContentOffset; 	//属性体偏移
+// 属性是否被索引项所索引，索引项是一个索引(如目录)的基本组成索引标志 0x0001 = Indexed
+	UCHAR IndexFlags;
+	UCHAR Unused;
 } RESIDENT_ATTRIBUTE, *PRESIDENT_ATTRIBUTE;
-
-
 
 // 这个结构的定义和图片里结构的描述不一致
 // TODO
 typedef struct {
 	ATTRIBUTE Attribute;
-	ULONGLONG LowVcn;
-	ULONGLONG HighVcn;
-	USHORT RunArrayOffset;
-	UCHAR CompressionUnit;
-	UCHAR AlignmentOrReserved[5];
-	ULONGLONG AllocatedSize;
-	ULONGLONG DataSize;
-	ULONGLONG InitializedSize;
-	ULONGLONG CompressedSize;    // Only when compressed   
+	ULONGLONG LowVcn;	   // 起始虚拟簇号VCN
+	ULONGLONG HighVcn;	   // 结束虚拟簇号VCN
+	USHORT RunArrayOffset; // run list运行列表的偏移量 常用值为40
+	UCHAR CompressionUint; // 若该成员为0，该属性未被压缩
+	UCHAR Reserved[5];			// 
+	ULONGLONG StreamAllocSize;	// 为属性值分配的空间，单位为簇
+	ULONGLONG StreamRealSize;	// 属性值实际使用的空间，单位为簇
+	ULONGLONG InitializedSize;	// 属性的原始大小，
+//	ULONGLONG CompressedSize;    // Only when compressed 压缩单位的大小，2的N次方   
+//接下来是run list的信息。
 } NONRESIDENT_ATTRIBUTE, *PNONRESIDENT_ATTRIBUTE;
 
 
-
+/* 文件属性列表属性 */
+/*
+ * 当单个MFT记录装不下文件的属性时，该文件才会有attribute list属性，装不下的可能原因：
+ * 1. The file has a large numbers of alternate names (文件有大量硬链接)
+ * 2. The attribute value is large, and the volume is badly fragmented（属性值太大，卷严重分散）
+ * 3. The file has a complex security descriptor (文件的安全描述符太复杂，但这个对NTFS 3.0没影响)
+ * 4. The file has many streams（文件有很多流）
+ */
 typedef struct {
 	ATTRIBUTE_TYPE AttributeType; 			//属性类型
 	USHORT Length;							//本记录长度
-	UCHAR NameLength;						//属性名长度
+	UCHAR NameLength;						//属性名长度(N,为0表示没有属性名)
 	UCHAR NameOffset;						//属性名偏移
-	ULONGLONG LowVcn;						//起始VCN
+	ULONGLONG LowVcn;						//起始VCN(属性常驻时为0)
 	ULONGLONG FileReferenceNumber;			//属性的文件参考号
-	USHORT AttributeNumber;					//标识
+	USHORT AttributeNumber;					//属性的ID(每一个属性都有一个唯一的ID号)
+/*接下来的2N个字节表示属性名的Unicode码，如果有属性名的话。否则就填0对齐*/
 	USHORT AlignmentOrReserved[3];
 } ATTRIBUTE_LIST, *PATTRIBUTE_LIST;
 
 
-typedef struct { //文件名属性的值区域   
-	ULONGLONG DirectoryFileReferenceNumber; 	// Parent Directory 父目录的FRN   
-	ULONGLONG CreateTime;						// Date Created
-	ULONGLONG ModifiedTime;						// Date Modified
-	ULONGLONG LastWriteTime; 					// Date MFT Mofified最后一次MFT更新时间   
-	ULONGLONG LastAccessTime;					// Date Accessed
-	ULONGLONG LogicalFileSize; 					// Logical File Size   
-	ULONGLONG SizeOnDisk; 						//    
-	ULONG Flags;
-	ULONG ReparseValue;
-	UCHAR NameLength;
-	UCHAR NameType; 							// 0x0  WIN32 0x01  DOS 0x02  WIN32&DOS 0x3   
-	WCHAR Name[1];
+typedef struct {  
+	ULONGLONG DirectoryFileReferenceNumber; 	// 父目录的文件参考号   
+	ULONGLONG CreateTime;						// 文件创建时间
+	ULONGLONG ModifiedTime;						// 文件修改时间
+	ULONGLONG LastWriteTime; 					// 最后一次MFT更新时间   
+	ULONGLONG LastAccessTime;					// 最后一次的访问时间
+	ULONGLONG AllocSize; 						// 文件分配的大小   
+	ULONGLONG DataSize; 						// 文件使用的大小  
+	ULONG Flags;								// 标志，如目录、压缩、隐藏等
+	ULONG ReparseValue;							// 用于EAS和重点解析
+	UCHAR NameLength;							// 以字符计的文件名长度，每个字符占用的字节数由命名空间决定
+	UCHAR NameType; 							// 文件名的命名空间0x0  WIN32 0x01  DOS 0x02  WIN32&DOS 0x3   
+//	WCHAR Name[1]; // 这部分是UNICODE方式表示的文件名，长度通常为2*NameLength。
 } FILENAME_ATTRIBUTE, *PFILENAME_ATTRIBUTE;
 
 
 typedef struct {
-	GUID ObjectId;
+	GUID ObjectId;								// 分配给文件的唯一标识符
 	union {
 		struct {
-			GUID BirthVolumeId;
-			GUID BirthObjectId;
-			GUID DomainId;
+			GUID BirthVolumeId;					// 文件第一次被创建，所在卷ID
+			GUID BirthObjectId;					// 文件第一次被创建时，分配的ID
+			GUID DomainId;						// 保留
 		};
 		UCHAR ExtendedInfo[48];
 	};
@@ -175,54 +183,122 @@ typedef struct {
 
 typedef struct {
 	ULONG Unknown[2];
-	UCHAR MajorVersion;
-	UCHAR MinorVersion;
-	USHORT Flags;
+	UCHAR MajorVersion;	// NTFS主要版本号
+	UCHAR MinorVersion;	// NTFS次要版本号
+	USHORT Flags;		// 0x0001 = VolumeIsDirty
 } VOLUME_INFORMATION, *PVOLUME_INFORMATION;
 
 
-typedef struct {
-	ULONG EntriesOffset;
-	ULONG IndexBlockLength;
-	ULONG AllocatedSize;
-	ULONG Flags; // 0x00 = Small directory, 0x01 = Large directory
-} DIRECTORY_INDEX, *PDIRECTORY_INDEX;
-
 
 typedef struct {
-	ULONGLONG FileReferenceNumber;
-	USHORT Length;
-	USHORT AttributeLength;
+	ULONGLONG MFTnum;		//文件的MFT参考号，前6B是改文件的MFT编号，用于定位此文件
+	USHORT ItemLen;			//索引项的大小
+	UCHAR IdxIdentifier[2];	//索引标志
+	UCHAR IsNode[2];		//1--此索引包含一个子节点，0--此为最后一项
+	UCHAR noUse[2];			//填充
+	ULONGLONG FMFTnum;		//父目录的MFT参考号，0x05表示根目录。
+	ULONGLONG	CreateTime;
+	ULONGLONG FileModifyTime;
+	ULONGLONG	MFTModifyTime;
+	ULONGLONG LastVisitTime;
+	ULONGLONG	FileAllocSize;
+	ULONGLONG FileRealSize;
+	UCHAR FileIdentifier[8];//文件标识
+	UCHAR FileNameLen;		//文件名长度F
+	UCHAR FileNameSpace;	//文件名命名空间
+//---0x52--- 文件名，长度为2F，并在其后填充到8字节
+//	ULONGLONG NextItemVCN;
+}INDEXITEM, *PINDEXITEM;
+
+/*目录条目*/
+typedef struct {
+	ULONGLONG FileReferenceNumber;	// 该条目描述的文件的FRN
+	USHORT Length;					// 该条目字节大小
+	USHORT AttributeLength;			// 被索引的属性的字节大小
 	ULONG Flags; // 0x01 = Has trailing VCN, 0x02 = Last entry
 				 // FILENAME_ATTRIBUTE Name;
 				 // ULONGLONG Vcn; // VCN in IndexAllocation of earlier entries
 } DIRECTORY_ENTRY, *PDIRECTORY_ENTRY;
 
-
 typedef struct {
-	ATTRIBUTE_TYPE Type;
-	ULONG CollationRule;
-	ULONG BytesPerIndexBlock;
-	ULONG ClustersPerIndexBlock;
+	ULONG EntriesOffset;	// 第一条记录（DIRECTORY_ENTRY）的内部字节偏移量
+	ULONG IndexBlockLength;	// 这部分索引块在使用中的字节大小
+	ULONG AllocatedSize;	// 分配了多少磁盘空间给这个索引块
+	ULONG Flags;			// 0x00 = Small directory, index root能装下这个目录, 0x01 = Large directory, index root装不下这个目录
+} DIRECTORY_INDEX, *PDIRECTORY_INDEX;
+
+
+/*索引块头部*/
+typedef struct {
+	NTFS_RECORD_HEADER Ntfs;	// 类型为 INDX 的 NTFS_RECORD_HEADER
+	ULONGLONG VcnIndex;			//本索引缓存在分配索引中的VCN
+	ULONG ItemOffset;			//第一索引项的偏移
+	ULONG ItemSize;				//索引项的实际大小(B)
+	ULONG ItemAllocSize;		//索引项的分配大小(B，不包括头部)，略小于4K
+	UCHAR IsNode;				//是节点则为1，否则表示有子节点。
+	UCHAR Nouse[3];				//填充
+//	UCHAR USN[2 * UsnUpdateArrSize];    //此处有一个使用Ntfs中的UsnUpdateArrSize*2大小的字节的USN号
+};
+
+/*根目录*/
+typedef struct {
+	ATTRIBUTE_TYPE Type;		// 4B 属性类型
+	ULONG CollationRule;		// 4B 排序规则
+	ULONG BytesPerIndexBlock;	// 4B 索引项分配大小
+	UCHAR ClustersPerIndexBlock;// 每索引记录的簇数
+	UCHAR noUse[3];
 	DIRECTORY_INDEX DirectoryIndex;
 } INDEX_ROOT, *PINDEX_ROOT;
 
+
+/* 重解析点 */
+typedef struct {
+	ULONG ReparseTag;
+	USHORT ReparseDataLength;
+	USHORT Reserved;
+	UCHAR ReparseData[1];
+} REPARSE_POINT, *PREPARSE_POINT;
+
+/* extended attribute information */
+typedef struct {
+	ULONG EaLength;
+	ULONG EaQueryLength;
+} EA_INFORMATION, *PEA_INFORMATION;
+
+typedef struct {
+	ULONG NextEntryOffset;
+	UCHAR Flags;
+	UCHAR EaNameLength;
+	USHORT EaValueLength;
+	CHAR EaName[1];
+	// UCHAR EaData[];
+} EA_ATTRIBUTE, *PEA_ATTRIBUTE;
+
+/* $AttrDef, 在 MFT 中的 Record number = 4*/
+typedef struct {
+	WCHAR AttributeName[64];
+	ULONG AttributeNumber;
+	ULONG Unknown[2];
+	ULONG Flags;
+	ULONGLONG MinimumSize;
+	ULONGLONG MaximumSize;
+} ATTRIBUTE_DEFINITION, *PATTRIBUTE_DEFINITION;
 
 #pragma pack(push,1)   
 typedef struct { //512B   
 	UCHAR Jump[3];			//跳过3个字节   
 	UCHAR Format[8]; 		//‘N’'T' 'F' 'S' 0x20 0x20 0x20 0x20   
 	USHORT BytesPerSector;	//每扇区有多少字节 一般为512B 0x200   
-	UCHAR SectorsPerCluster;//每簇有多少个扇区
-	USHORT res; 			//保留
-	UCHAR Mbz1;				//保留0
+	UCHAR SectorsPerCluster;//每簇有多少个扇区   
+	USHORT BootSectors;		//   
+	UCHAR Mbz1;				//保留0   
 	USHORT Mbz2;			//保留0   
 	USHORT Reserved1;		//保留0   
 	UCHAR MediaType;		//介质描述符，硬盘为0xf8   
 	USHORT Mbz3;			//总为0   
-	USHORT SectorsPerTrack;	//每道扇区数，一般为0x3f   
-	USHORT NumberOfHeads;	//磁头数   
-	ULONG PartitionOffset;	//该分区的偏移（即该分区前的隐含扇区数 一般为磁道扇区数0x3f 63）   
+	USHORT SectorsPerTrack;	//每道扇区数，硬盘一般为0x3f   
+	USHORT NumberOfHeads;	//硬盘的磁头数   
+	ULONG PartitionOffset;	//该分区的偏移（即该分区前的隐含扇区数 一般为一个磁道扇区数0x3f 63）   
 	ULONG Reserved2[2];
 	ULONGLONG TotalSectors;	//该分区总扇区数   
 	ULONGLONG MftStartLcn;	//MFT表的起始簇号LCN   
@@ -232,72 +308,9 @@ typedef struct { //512B
 	ULONG ClustersPerIndexBlock;//每个索引块的簇数   
 	LARGE_INTEGER VolumeSerialNumber;//卷序列号   
 	UCHAR Code[0x1AE];
-	USHORT BootSignature;
+	USHORT BootSignature;			//总是 0xAA55
 } BOOT_BLOCK, *PBOOT_BLOCK;
 
 #pragma pack(pop) 
-
-
-
-
-
-
-
-
-/* 
-// 和图片描述中定义的不一样
-typedef struct {
-	ULONGLONG CreationTime;		// Date created
-	ULONGLONG ModifiedTime;		// Date Modified
-	ULONGLONG LastWriteTime;	// Date MFT record modified
-	ULONGLONG LastAccessTime;	// Date Accessed
-	ULONG FileAttributes;
-	ULONG AlignmentOrReservedOrUnknown[3];
-	ULONG QuotaId;                // NTFS 3.0
-	ULONG SecurityId;       // NTFS 3.0
-	ULONGLONG QuotaCharge;  // NTFS 3.0
-	USN Usn;                      // NTFS 3.0
-} STANDARD_INFORMATION, *PSTANDARD_INFORMATION;
-
-// 按图片中的描述定义如下
-typedef enum{
-	ReadOnly = 0x0001,
-	Hidden 	= 0x0002,
-	System 	= 0x0004,
-	res1   	= 0x0008,
-	res2 	= 0x0010,
-	Archive	= 0x0020,
-	Device 	= 0x0040,
-	Normal 	= 0x0080,
-	Temporary = 0x0100,
-	SparseFile = 0x0200,
-	ReparsePoint = 0x0400,
-	Compressed 	= 0x0800,
-	Offline 	= 0x1000,
-	NotIndex = 0x2000,
-	Encrypted = 0x4000,
-	res3 = 0x8000
-}FileNameANDStdInfoTYPE
-
-
-
-typedef struct {
-	ULONGLONG CreationTime;		// Date created
-	ULONGLONG ModifiedTime;		// Date Modified
-	ULONGLONG LastWriteTime;	// Date MFT record modified
-	ULONGLONG LastAccessTime;	// Date Accessed
-	ULONG Flags;
-	ULONG MaxVersions;
-	ULONG VersionNum;
-	ULONG ClassID;
-	ULONG OwerID;
-	ULONG SecurityId;       // NTFS 3.0
-	ULONGLONG QuotaCharge;  // NTFS 3.0
-	USN Usn;                // NTFS 3.0  Update Sequence Number(USN)
-	ULONGLONG Unused;
-} STANDARD_INFORMATION, *PSTANDARD_INFORMATION;
-
-
-*/
 	
 #endif	// NTFS_H_INCLUDED
