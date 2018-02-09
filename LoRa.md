@@ -79,3 +79,7 @@ LoRaWAN终端设备的上行信号需要三个以上的网关设备收到才能�
 ![LoRa4](http://img.blog.csdn.net/20180206113914486?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvWlMxMjNaUzEyM1pT/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
 在网关设备上需要精确的时间同步。每一个上行的帧(frame)都被网关打上了一个精确的时间戳，这个时间戳被作为帧的元数据的一部分转发到网络服务器，帧中同时也会包含信号强度(signal level)、信噪比(signal-to-noise ratio)、频率误差(frequency error)。网络服务器将同一个帧的信息分类，将包括时间戳在内的归属于这个帧的所有的元数据整合起来，	向geolocation server请求位置计算服务。
+
+### Impact of Propagation(传播) Errors
+
+​	在多径环境当中，LoRaWAN定位的性能被网关的始终精度所限制。Conductive geolocation testing(导航地理定位测试) 在信号电平高于灵敏度25dB通常能够获得3m的精度。
