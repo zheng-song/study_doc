@@ -221,3 +221,301 @@
 
 
 
+
+
+### char与wchar_t
+
+​	char叫多字节字符，一个char占一个字节，之所以叫多字节字符是因为它表示一个字时可能是一个字节也可能是多个字节。一个英文字符(如’s’)用一个char(一个字节)表示，一个中文汉字(如’中’)用3个char(三个字节)表示。
+
+​	wchar_t被称为宽字符，一个wchar_t占2个字节。之所以叫宽字符是因为所有的字都要用两个字节(即一个wchar_t)来表示，不管是英文还是中文。
+
+说明： 
+
+1. 用常量字符给wchar_t变量赋值时，前面要加L。如： wchar_t wch2 = L’中’; 
+
+2. 用常量字符串给wchar_t数组赋值时,前面要加L。如： wchar_t wstr2[3] = L”中国”; 
+
+3. 如果不加L，对于英文可以正常，但对于非英文(如中文)会出错。
+
+### string与wstring
+
+​	字符数组可以表示一个字符串，但它是一个定长的字符串，我们在使用之前必须知道这个数组的长度。为方便字符串的操作，STL为我们定义好了字符串的类string和wstring。大家对string肯定不陌生，但wstring可能就用的少了。
+
+string是普通的多字节版本，是基于char的，对char数组进行的一种封装。
+
+wstring是Unicode版本，是基于wchar_t的，对wchar_t数组进行的一种封装。
+
+
+
+### MultiByteToWideChar
+
+​	该函数映射一个字符串到一个宽字符(unicode)的字符串。由该函数映射的字符串没必要是多字节字符组。
+
+
+
+
+
+# 字符集(Charcater Set)与字符编码(Encoding)
+
+- 字符集(Charcater Set或Charset)：是一个系统支持的所有抽象字符的集合，也是一系列字符的集合。字符是各种文字和符号的总称，包括各国家文字、标点符号、图形符号、数字等。常见的字符集有ASCII字符集、GB2312字符集(主要用于处理中文汉字)、GBK字符集(主要用于处理中文汉字)、Unicode字符集。
+- 字符编码(Character Encoding):是一套法则，使用这一套法则能够对自然语言的字符的一个字符集（如字母表或音节表），与计算机能识别的二进制数字进行配对。即它能在符号集合与数字系统之间建立对应关系，是信息处理的一项基本技术。通常人们用符号集合（一般情况下就是文字）来表达信息，而计算机的信息处理系统则是以二进制的数字来存储和处理信息的。字符编码就是将符号转换为计算机能识别的二进制编码。
+
+>  一般一个字符集等同于一个编码方式，ANSI体系(ANSI是一种字符代码，为使计算机支持更多语言，通常使用 0x80~0xFF 范围的 2 个字节来表示 1 个字符)的字符集如ASCII、ISO8859-1、GB2312、GBK等等都是如此。一般我们说一种编码都是针对某一特定的字符集。 一个字符集上也可以有多种编码方式，例如UCS字符集(也是Unicode使用的字符集)上有UTF-8、UTF-16、UTF-32等编码方式。
+
+从计算机字符编码的发展历史角度来看，大概经历了三个阶段： 
+第一个阶段：ASCII字符集和ASCII编码。 
+计算机刚开始只支持英语(即拉丁字符)，其它语言不能够在计算机上存储和显示。ASCII用一个字节(Byte)的7位(bit)表示一个字符，第一位置0。后来为了表示更多的欧洲常用字符又对ASCII进行了扩展，又有了EASCII，EASCII用8位表示一个字符，使它能多表示128个字符，支持了部分西欧字符。
+
+第二个阶段:ANSI编码（本地化） 
+为使计算机支持更多语言，通常使用 0x80~0xFF 范围的 2 个字节来表示 1 个字符。比如：汉字 ‘中’ 在中文操作系统中，使用 [0xD6,0xD0] 这两个字节存储。 不同的国家和地区制定了不同的标准，由此产生了 GB2312, BIG5, JIS 等各自的编码标准。这些使用 2 个字节来代表一个字符的各种汉字延伸编码方式，称为 ANSI 编码。在简体中文系统下，ANSI 编码代表 GB2312 编码，在日文操作系统下，ANSI 编码代表 JIS 编码。 不同 ANSI 编码之间互不兼容，当信息在国际间交流时，无法将属于两种语言的文字，存储在同一段 ANSI 编码的文本中。
+
+第三个阶段：UNICODE（国际化） 
+为了使国际间信息交流更加方便，国际组织制定了 UNICODE 字符集，为各种语言中的每一个字符设定了统一并且唯一的数字编号，以满足跨语言、跨平台进行文本转换、处理的要求。UNICODE 常见的有三种编码方式:UTF-8(1个字节表示)、UTF-16((2个字节表示))、UTF-32(4个字节表示)。
+
+我们可以用一个树状图来表示由ASCII发展而来的各个字符集和编码的分支： 
+
+![img](http://img.blog.csdn.net/20151025195320594)
+
+
+
+​	在windows中文件的命名是固定用两个字节表示一个字符，在MFT中可以发现英文文件名自附件都填充了一个'\\0', 这是宽字符集与变长字符集兼容，在宽字符集中，小于128的字符数值上是等于ASCII码；我们的文件数据一般用的是变长字符集(GB2312等等)；为了比较输入的文件名和NTFS中的文件名，我们必须要先转换。
+
+​    
+
+
+
+
+
+
+
+
+
+
+
+
+​												
+
+
+​        
+​			
+​			
+
+
+
+[Shihira](http://www.cppblog.com/Shihira/)
+
+Open source - 开放源代码 - 開放原始碼 - オープンソース - 오픈 소스 - Отворен код - متن‌باز
+
+
+
+
+​				
+​					
+​	
+​		
+​			[Windows API 字符编码转换以及一些解释和心得](http://www.cppblog.com/Shihira/archive/2013/10/28/200124.html)
+​		
+​		
+我在解决乱码上面实际走了不少弯路，做了很多实验，查了很多资料。在这里做下笔记，希望后来者可以明白，少走些弯路。
+
+
+从最熟悉的两种字符编码说起
+
+
+
+除了一些旧的、没有考虑到兼容性的网页还在用gbk做编码外，大部分的网页都已经用utf-8做编码了。但是最令人头疼的是，windows的控制台是很不好显示utf-8的。有明君为我大C++写了两个函数，是正确的、好用的~~（除了用std::string做返回值让我等效率党有点觉得不爽之外……还是挺方便的）~~.
+
+#include <string>
+
+#include <windows.h>
+
+using std::string;
+
+
+
+//gbk 转 utf8
+
+string GBKToUTF8(const string& strGBK)
+
+{
+
+​    string strOutUTF8 = "";
+
+​    WCHAR * str1;
+
+​    int n = MultiByteToWideChar(CP_ACP, 0, strGBK.c_str(), -1, NULL, 0);
+
+​    str1 = new WCHAR[n];
+
+​    MultiByteToWideChar(CP_ACP, 0, strGBK.c_str(), -1, str1, n);
+
+​    n = WideCharToMultiByte(CP_UTF8, 0, str1, -1, NULL, 0, NULL, NULL);
+
+​    char * str2 = new char[n];
+
+​    WideCharToMultiByte(CP_UTF8, 0, str1, -1, str2, n, NULL, NULL);
+
+​    strOutUTF8 = str2;
+
+​    delete[]str1;
+
+​    str1 = NULL;
+
+​    delete[]str2;
+
+​    str2 = NULL;
+
+​    return strOutUTF8;
+
+}
+
+
+
+//utf-8 转 gbk
+
+string UTF8ToGBK(const string& strUTF8)
+
+{
+
+​    int len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, NULL, 0);
+
+​    unsigned short * wszGBK = new unsigned short[len + 1];
+
+​    memset(wszGBK, 0, len * 2 + 2);
+
+​    MultiByteToWideChar(CP_UTF8, 0, (LPCTSTR)strUTF8.c_str(), -1, wszGBK, len);
+
+
+
+​    len = WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, NULL, 0, NULL, NULL);
+
+​    char *szGBK = new char[len + 1];
+
+​    memset(szGBK, 0, len + 1);
+
+​    WideCharToMultiByte(CP_ACP,0, wszGBK, -1, szGBK, len, NULL, NULL);
+
+​    //strUTF8 = szGBK;
+
+​    std::string strTemp(szGBK);
+
+​    delete[]szGBK;
+
+​    delete[]wszGBK;
+
+​    return strTemp;
+
+}
+
+这玩意儿不跨平台，因为它用到了windows api。我之所以把它放到跨平台编程上面来，是因为字符编码这东西只有到跨平台的时候才显得坑爹。
+
+
+接着我是不是要介绍那俩函数一下？
+int MultiByteToWideChar(
+
+  _In_       UINT CodePage, /*代码页是Windows下字符编码的叫法，gbk是936，utf-8是65001，CP_ACP是ANSI*/
+
+  _In_       DWORD dwFlags, /*选项标志，转换类型，设0就行了*/
+
+  _In_       LPCSTR lpMultiByteStr, /*多字节字符串*/
+
+  _In_       int cbMultiByte, /*字符串要处理的长度，如果是-1函数就会处理整个字符串*/
+
+  _Out_opt_  LPWSTR lpWideCharStr, /*输出的宽字符串缓存，如果为空就返回需要的宽字符串长度*/
+
+  _In_       int cchWideChar /*宽字符串缓存的长度，当然如果宽字符串为空，这个设0就可以了*/
+
+);
+
+
+
+int WideCharToMultiByte(
+
+  _In_       UINT CodePage,
+
+  _In_       DWORD dwFlags,
+
+  _In_       LPCWSTR lpWideCharStr,
+
+  _In_       int cchWideChar,
+
+  _Out_opt_  LPSTR lpMultiByteStr,
+
+  _In_       int cbMultiByte, /*前面的基本与MultiByteToWideChar都相同，就不解释了*/
+
+  _In_opt_   LPCSTR lpDefaultChar, /*填0即可*/
+
+  _Out_opt_  LPBOOL lpUsedDefaultChar /*填0即可*/
+
+);
+
+
+这两个函数分别是将多字节字符串转换为宽字符字符串 和 
+将宽字符字符串转换为多字节字符串（在此处晕倒的童鞋们我没有对不起你们……是M$那家伙对不起你们）。我早就说过Windows API 
+的界面不友好，这么多不知道干嘛吗用的参数，全部填0就对了。要是iconv()，它貌似只有4个参数，这才是好的榜样。
+
+
+
+宽字符？多字节？
+这是Windows给它们起的名字，让人摸不着头脑。
+
+
+
+
+
+
+​     宽字符：就是**Unicode**。它雷打不动地用2个字节（0x0000 - 0xFFFF），表示所有我们平常能见到的字符，具体的表格见：<http://unicode-table.com>
+​     
+
+
+
+
+​     
+​     多字节：就是除了Unicode外**其他**的。我们熟悉的gbk, utf-8, big5，统统归入多字节。
+​     
+
+
+
+
+
+宽字符之所以叫做宽字符，是因为它是一个宽一点的字符。那什么是短字符……就是ascii了，1个字节1个字符绝对够短，而且只能表示256个西欧字符。宽字符呢，是2个字节1个字符。宽一点，但还是可以识别到一个字符是哪里的。而多字节呢，就是它在计算机里表示成多个字节，但是没有办法识别那里到那里是一个字符。
+
+
+我不喜欢这两个函数的命名。如果按照Python的命名，MultiByteToWideChar 应该叫 decode(解码)，WideCharToMultiByte 应该叫 encode(编码)。
+
+
+
+所以呢？
+如你所见，多字节无法准确识别字符的长度，处理起来就会很麻烦。而宽字符大多时候虽然比多字节多耗费一点空间，但是处理起来方便。比如正则表达式处理，引擎是基于字符去匹配的，宽字符可以两个字节两个字节跳着匹配，而多字节就会匹配错误。
+
+
+比如有一个词“程序”=0xB3CCD0F2(gbk)，我想匹配“绦”=0xCCD0(gbk)，正则库会替我把中间那两个字节匹配了。用在C里用wchar_t，C++里用std::wstring，我们可以很准确的，无错误地匹配到我们想要的子串，因为引擎在迭代的时候是逐字（而不是逐字节）进行比较的。
+1 >>> str1 = "绦"
+
+2 >>> str2 = "程序"
+
+3 >>> print re.findall(str1, str2)
+
+4 ['\xcc\xd0']
+
+5 >>> print re.findall(str1.decode("gbk"), str2.decode("gbk"))
+
+6 []
+**所以在处理字符串的时候，但凡要处理中文，要先把用户给的字符串解码成Unicode。处理完之后显示出来或者保存，再编码成需要的charset。**
+
+
+
+*Appendix*
+*在不同的地方用不同的编码：*
+
+- *网络文本（如网页）传输一般用utf-8，因为有少量中文，而大部分是英文。*
+- *在保存为本地文件的时候，应该保存为Unicode，因为本地存储资源丰富，且可以节省时间，实时解码毕竟也是O(N^2)啊。*
+- *显示出来应该用系统的编码，中文Windows为gbk，繁体Windows为Big5，Linux一律为UTF-8。*
+- *源代码里的少量中文串尽量用"\x????\x????"来表示，如果有大量中文建议用gettext或者资源之类的以外挂的方式读入。*
+- *Qt内部使用Unicode，所以编写Qt应用时显示文字直接传递宽字符串即可。*
+- *NTFS的文件名、路径都是用UTF16LE编码的，所以如果Windows下用户输入的是路径就无需解码了。*
+
+
+
+
+
