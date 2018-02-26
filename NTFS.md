@@ -234,6 +234,20 @@ typedef struct {
 
   一个INDEX_ROOT结构后面跟随者一个DIRECTORY_ENTRY结构序列。
 
+
+
+##### 90H属性详解
+
+1. 第一种情况：
+
+![](http://upload-images.jianshu.io/upload_images/6128001-8fd4c0f8759659cc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![](http://upload-images.jianshu.io/upload_images/6128001-7824e3fe9d7dc32b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+
+
+
+
 #### AttributeIndexAllocation(A0H)
 
 ​	A0属性是索引分配属性，存储着组成索引的B+树目录索引子节点的定位信息。A0属性由属性头和运行列表组成，一般指向一个或者是多个目录(INDEX文件，即4K的缓存)，它总是常驻属性。A0属性和90属性共同描述了磁盘文件和目录的MFT记录的位置。第五项MFT的A0属性记录根目录的位置。
