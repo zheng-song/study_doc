@@ -1,6 +1,6 @@
 
 
-1. 根据文件系统的Boot Sector头部中的内容来定位MFT的位置.由MFT所在的簇号(Logical  Cluster of $MFT)* 一个簇占的分区数 * 一个分区占据的字节数 来确定MFT的偏移位置。对应数据结构中的内容既：`mftStartLcn * SectorPerCluster * BytePerSector`,假设mftStartLcn中的内容为 00 00 0C 00 00 00 00(簇号为0xC0000,小端模式)  ，SectorPerCluster 中的内容为00 02(0x200)，BytePerSector的内容为08(0x08)，那么MFT相对于文件系统的偏移位置为 `0xC0000 * 0x200 * 0x80 = 0xC000 0000`
+1. 根据文件系统的Boot Sector头部中的内容来定位MFT的位置.由MFT所在的簇号(Logical  Cluster of $MFT) * 一个簇占的分区数 * 一个分区占据的字节数 来确定MFT的偏移位置。对应数据结构中的内容既：`mftStartLcn * SectorPerCluster * BytePerSector`,假设mftStartLcn中的内容为 00 00 0C 00 00 00 00(簇号为0xC0000,小端模式)  ，SectorPerCluster 中的内容为00 02(0x200)，BytePerSector的内容为08(0x08)，那么MFT相对于文件系统的偏移位置为 `0xC0000 * 0x200 * 0x80 = 0xC000 0000`
 2. 定位到该文件系统下`0xC000 0000`的偏移位置，既为MFT的起始位置。MFT中最开始的16个条目被用来保存特殊文件(metedata：元数据)，每一个条目的大小为0x400字节，`$Root`特殊文件(根路径)在MFT中的第六个位置(5号条目)，根路径相对MFT的偏移地址为`0x400 * 5 = 0x1400`,相对该文件系统的偏移为`0xC000 1400`.
 3. 定位到MFT中根路径的位置，即`0xC000 1400` 处，根目录中的文件及文件夹一般都比较多，通常其属性会是非常驻属性，关于这些文件夹的信息记录在了其它的位置。而记录在什么位置是由索引分配属性来记录的，也就是A0属性，接下来着重看一下A0属性，
 
