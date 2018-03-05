@@ -1,6 +1,6 @@
 [TOC]
 
-###在C语言中，如何在main()函数之前执行函数
+##在C语言中，如何在main()函数之前执行函数
 
 在gcc中可使用attribute关键字，声明constructor和destructor，如下所示：
 
