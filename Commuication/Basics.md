@@ -176,7 +176,6 @@ GSM系统的帧长为4.6ms(每帧8个时隙)，每一个时隙分配给一个用
 
 
 
-
 ----
 
 ##多路复用技术
@@ -191,3 +190,8 @@ GSM系统的帧长为4.6ms(每帧8个时隙)，每一个时隙分配给一个用
 
 
 
+---
+
+##以太网的传输协议：CSMA/CD 
+
+​	CSMA/CD(Carrier Sense Multiple Access with Collision Detection)
