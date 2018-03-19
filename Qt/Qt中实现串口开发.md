@@ -6,10 +6,6 @@ QSerialPort 类提供了操作串口的各种接口。
 
 QSerialPortInfo 是一个辅助类，可以提供计算机中可用串口的各种信息。
 
-
-
-
-
 首先需要在QT的工程文件pro当中加入`QT += serialport`
 
 然后在头文件当中包含串口`#include <QSerialPort>`
