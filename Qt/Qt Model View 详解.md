@@ -225,7 +225,7 @@ for(int row = 0; row < numRows; ++row)
 
 #### 简介
 
-​	model/view组件之间功能的分离，允许创建model利用现成的views。这也可以使用标准的功能图形用户接口组件像QListView,QTableView和QTreeView来显示来自各种数据源的数据为QAbstractListModel类提供了非常灵活的接口，允许数据源以层次结构的形式来管理信息，也允许以某种方式对数据进行插入、删除、修改和存储。它也提供了对拖拽操作的支持。QAbstractListModel与QAbstractTableModel为简单的非层次结构的数据提供了接口，对于比较简单的list和table models来说，这是不错的一个开始点。
+​	model/view组件之间功能的分离，允许创建model利用现成的views。这也可以使用标准的功能图形用户接口组件像QListView,QTableView和QTreeView来显示来自各种数据源的数据,QAbstractItemModel类提供了非常灵活的接口，允许数据源以层次结构的形式来管理信息，也允许以某种方式对数据进行插入、删除、修改和存储。它也提供了对拖拽操作的支持。QAbstractListModel与QAbstractTableModel为简单的非层次结构的数据提供了接口，对于比较简单的list和table models来说，这是不错的一个开始点。
 
 #### 设计一个Model
 
@@ -461,3 +461,261 @@ secondTableView->setModel(model);
 ​	用于新的view类中的选择模型比Qt3中的模型有了很大的改进。它为基于model/view架构的选择提供了更为全面的描述。尽管对提供了的views来说，负责操纵选择的标准类已经足以应付，但是你也可以创建特定的选择模型来满足你特殊的需求。
 
 ​	关于在view被选择的数据项的信息保持在QItemSelectionModel类的实例中。它也为每个独立的model中的数据项维护model indexes信息，与任何views都关联关系。既然一个model可用于多个views,那么在多个views之间共享选择信息也是可以做到的，这使得多个views可以以一致的方式进行显示。
+
+​	选择由多个选择范围组成。通过仅仅记录开始model indexes与结束model indexes，最大化地记录了可以选择的范围。非连续选择数据项由多个选择范围来描述。选择模型记录model indexes的集合来描述一个选择。最近选择的数据项被称为currentselection。应用程序可以通过使用某种类型的选择命令来修改选择的效果。
+
+​	在进行选择操作时，可以把QItemSelectionModel看成是model中所有数据项选择状态的一个记录。一旦建立一个选择模型，所有项的集合都可以选择，撤消选择，或者选择状态进行切换而不需要知道哪个数据项是否已经被选择过。所有被选择的项的indexes在任何时候都可以得到，通过信号槽机制可以通知别的组件发生的变化。
+
+
+
+#### 使用选择模型
+
+​	标准view类提供了缺省的选择模型，它们可以在大多数的程序中使用。一个view中的选择模型可以通过调用view的函数selectionModel()取得，也可以通过setSelectionModel()在多个views之间共享选择模型，因此总的来说构建一个新的模型一般情况下是不太必要的。
+
+​	通过给QItemSelection指定一个model，一对model indexes，可以创建一个选择，indexes的用法依赖于给定的model，这两个indexes被解释成选择的区块中的左上角项和右下角项。model中的项的选择服从于选择模型。
+
+
+
+#### 选择项
+
+​	构建一个table model，它有32个项，用一个table view进行显示：
+
+```C++
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+
+    TableModel *model = new TableModel(8,4,&a);
+
+    QTableView *table = new QTableView(0);
+    table->setModel(model);
+
+    QItemSelectionModel *selectionModel = table->selectionModel();
+    QModelIndex topLeft = model->index(0,0,QModelIndex());
+    QModelIndex bottomRight = model->index(5,2,QModelIndex());
+
+    QItemSelection selection(topLeft,bottomRight);
+    selectionModel->select(selection,QItemSelectionModel::Select);
+    return a.exec();
+}
+```
+
+结果如下：
+
+![图片.png](https://upload-images.jianshu.io/upload_images/6128001-4501221ce121f697.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+#### 读取选择状态
+
+​	存储在选择模型中的indexes可以用selectionIndexes()函数来读取。它返回一个未排序的model indexes列表，我们可以遍历它，如果我们知道他们关联于哪一个model的话。
+
+```c++
+QModelIndexList indexes = selectionModel->selectedIndexes();
+QModelIndex index;
+
+foreach(index, indexes) 
+{
+  QString text = QString("(%1,%2)").arg(index.row()).arg(index.column());
+  model->setData(index, text);
+}
+```
+
+选择模型在选择发生变化的时候会发出信号。这用于通知别的组件包括整体与当前焦点项所发生的变化。我们可以连接selectionChanged()信号到一个槽，检查当信号产生时哪些项被选择或被取消选择。这个槽被调用时带有两个参数，它们都是QItemSelection对象，一个包含新被选择的项，另一个包含新近被取消选择的项。下面的代码演示了给新选择的项添加数据内容，新近被取消选择的项的内容被清空。
+
+```c++
+void MainWindow::updaeSelection(const QItemSelection &selected,\
+                        const QItemSelection &deselected)
+{
+  QModelIndex index;
+  QModelIndexList items = selected.indexes();
+
+  foreach (index, items) {
+    QString text = QString("(%1,%2)").arg(index.row()).arg(index.column());
+    model->setData(index,text);
+  }
+  items = deselected.indexes();
+  foreach (index, items) {
+    model->setData(index,"");
+  }
+}
+```
+
+也可以通过响应currentChanged()信号来跟踪当前的焦点项，对应的槽就有两个接收参数，一个表示之前的焦点，另外一个表示当前的焦点。
+
+```c++
+void MainWindow::changeCurrent(const QModelIndex &current,\
+						const QModelIndex &previous)
+{
+	statusBar()->showMessage(tr("Moved from (%1,%2) to (%3,%4)")\
+                             .arg(previous.row()).arg(previous.column())\
+                             .arg(current.row()).arg(current.column()));
+}
+```
+
+#### 更新选择
+
+​	选择指令是通过选择标志提供的，它被定义在`QItemSelectionModel::SelectionFlag()`中。常用的有Select标记，Toggle标记，Deselect标记，Current标记，Clear标记，其意义一目了然。沿上面例子的结果执行以下代码：
+
+```C++
+QItemSelection toggleSelection;
+topLeft = model->index(2, 1, QModelIndex());
+bottomRight = model->index(7, 3, QModelIndex());
+toggleSelection.select(topLeft, bottomRight);
+selectionModel->select(toggleSelection, QItemSelectionModel::Toggle);
+```
+
+结果如下：
+
+![图片.png](https://upload-images.jianshu.io/upload_images/6128001-470547a653f1ec38.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+缺省情况下，选择指令只针对单个项(由model indexes指定)。然而，选择指令可以通过与另外标记的结合来改变整行和整列。举例来说，假如你只使用一个index来调用select(),但是用Select标记与Rows标记的组合，那么包括那个项的整行都将被选择。看以下示例：
+
+```C++
+QItemSelection columnSelection;
+topLeft = model->index(0, 1, QModelIndex());
+bottomRight = model->index(0, 2, QModelIndex());
+columnSelection.select(topLeft, bottomRight);
+selectionModel->select(columnSelection,\
+				QItemSelectionModel::Select | QItemSelectionModel::Columns);
+QItemSelection rowSelection;
+topLeft = model->index(0, 0, QModelIndex());
+bottomRight = model->index(1, 0, QModelIndex());
+rowSelection.select(topLeft, bottomRight);
+selectionModel->select(rowSelection,\
+				QItemSelectionModel::Select | QItemSelectionModel::Rows);
+```
+
+结果如下：
+
+![图片.png](https://upload-images.jianshu.io/upload_images/6128001-f8238ce12cce62dd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+#### 选择模型中的所有项
+
+​	为了选择model中的所有项，必须先得创建一个选择，它包括当前层次上的所有项:
+
+```C++
+QModelIndex topLeft = model->index(0, 0, parent);
+QModelIndex bottomRight = model->index(model->rowCount(parent)-1,
+model->columnCount(parent)-1, parent);
+
+QItemSelection selection(topLeft, bottomRight);
+selectionModel->select(selection, QItemSelectionModel::Select);
+```
+
+顶级index可以这样：`QModelIndex parent = QModelIndex();`对于具有层次结构的model来说，可以使用hasChildren()函数来决定给定项是否是其他项的父项。
+
+----
+
+
+
+## Delegate类
+
+### 概念
+
+​	与MVC模式不同，model/view结构没有用于与用户交互的完全独立的组件。一般来讲， view负责把数据展示给用户，也处理用户的输入。为了获得更多的灵活性，交互通过delegagte执行。它既提供输入功能又负责渲染view中的每个数据项。控制delegates的标准接口在QAbstractItemDelegate类中定义。Delegates通过实现paint()和sizeHint()以达到渲染内容的目的。然而，简单的基于widget的delegates,可以从QItemDelegate子类化，而不是QAbstractItemDelegate,这样可以使用它提供的上述函数的缺省实现。delegate可以使用widget来处理编辑过程，也可以直接对事件进行处理。
+
+
+
+### 使用现成的delegate
+
+​	Qt提供的标准views都使用QItemDelegate的实例来提供编辑功能。它以普通的风格来为每个标准view渲染数据项。这些标准的views包括：QListView,QTableView,QTreeView。所有标准的角色都通过标准views包含的缺省delegate进行处理。一个view使用的delegate可以用itemDelegate()函数取得,而setItemDelegate()
+ 函数可以安装一个定制delegate。
+
+
+
+### 一个简单的delegate
+
+​	这个delegate使用QSpinBox来提供编辑功能。它主要想用于显示整数的models上。尽管我们已经建立了一个基于整数的table model,但我们也可以使用QStandardItemModel，因为delegate可以控制数据的录入。我们又建了一个table view来显示model的内容，用我们定制的delegate来编辑。
+
+![图片.png](https://upload-images.jianshu.io/upload_images/6128001-0ca49e594d926ad4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+我们从QItemDelegate子类化，这样可以利用它缺省实现的显示功能。当然我们必需提供函数来管理用于编辑的widget:
+
+```C++
+class SpinBoxDelegate : public QItemDelegate
+{
+    Q_OBJECT
+
+public:
+    SpinBoxDelegate(QObject *parent = 0);
+
+    QWidget *createEditor(QWidget *parent, constQStyleOptionViewItem &option,\
+                          const QModelIndex &index) const;
+
+    void setEditorData(QWidget *editor, const QModelIndex &index) const;
+    void setModelData(QWidget *editor,QAbstractItemModel *model,\
+                      const QModelIndex &index) const;
+
+    void updateEditorGeometry(QWidget *editor,\
+                              const QStyleOptionViewItem &option,\
+                              const QModelIndex &index) const;
+};
+```
+
+需要注意的是，当一个delegate创建的时候，不需要安装一个widget，只有在真正需要时才创建这个用于编辑的widget。
+
+#### 提供编辑器
+
+​	在这个例子中，当table view需要提供一个编辑器时，它要求delegate提供一个可用于编辑的widget,它应该适用于当前正被修改的数据项。这正是createEditor()函数应该实现的：
+
+```C++
+QWidget *SpinBoxDelegate::createEditor(QWidget *parent,\
+                                       const QStyleOptionViewItem &option ,\
+                                       const QModelIndex &index) const
+{
+    QSpinBox *editor = new QSpinBox(parent);
+    editor->setMinimum(0);
+    editor->setMaximum(100);
+    return editor;
+}
+```
+
+​	我们不需要跟踪这个widget的指针，因为view会在不需要时销毁这个widget。我们也给编辑安装了delegate缺省的事件过滤器，这提供了用户期望的标准编辑快捷键。view通过我们定义相应的函数来保证编辑器的数据与几何布局被正确的设置。我们也可以根据不同的model index来创建不同的编辑器，比如，我们有一列整数，一列字符串，我们可以根据哪种列被编辑来创建一个QSpinBox或是QLineEdit。delegate必需提供一个函数把model中的数据拷贝到编辑器中。
+
+```c++
+void SpinBoxDelegate::setEditorData(QWidget *editor,\
+						const QModelIndex &index) const
+{
+	int value = index.model()->data(index, Qt::DisplayRole).toInt();
+	QSpinBox *spinBox = static_cast<QSpinBox*>(editor);
+	spinBox->setValue(value);
+}
+```
+
+#### 向Model提交数据
+
+​	这需要我们实现另外一个函数setModelData():
+
+```c++
+void SpinBoxDelegate::setModelData(QWidget *editor,QAbstractItemModel *model,\
+                                   const QModelIndex &index) const
+{
+    QSpinBox *spinBox = static_cast<QSpinBox*>(editor);
+    spinBox->interpretText();
+    int value = spinBox->value();
+    model->setData(index, value);
+}
+```
+
+标准的QItemDelegate类当它完成编辑时会发射closeEditor()信号来通知view。view保证编辑器widget关闭与销毁。本例中我们只提供简单的编辑功能，因此不需要发送个信号。
+
+#### 更新编辑器的几何布局
+
+​	delegate负责管理编辑器的几何布局。这些几何布局信息在编辑创建时或view的尺寸位置发生改变时，都应当被提供。幸运的是，view通过一个view option可以提供这些必要的信息。
+
+```C++
+void SpinBoxDelegate::updateEditorGeometry(QWidget *editor,\
+                                       	   const QStyleOptionViewItem &option, \
+                                           const QModelIndex &index) const
+{
+    editor->setGeometry(option.rect);
+}
+```
+
+==编辑提示:==
+
+​	编辑完成后，delegate会给别的组件提供有关于编辑处理结果的提示，也提供用于后续编辑操作的一些提示。这可以通过发射带有某种hint的closeEditor()信号完成。这些信号会被安装在spin box上的缺省的QItemDelegate事件过滤器捕获。对这个缺省的事件过滤来讲，当用户按下回车键，delegate会对model中的数据进行提交，并关闭spin box。我们可以安装自己的事件过滤器以迎合我们的需要，例如，我们可以发射带有EditNextItem hint的closeEditor()信号来实现自动开始编辑view中的下一项。
+
+
+
+
+
