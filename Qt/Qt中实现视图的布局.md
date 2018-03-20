@@ -22,4 +22,6 @@
 
 ​	该模型对应于层次结构的每一个层级都有rowCount()函数和columnCount()函数。行和列可以使用insertRows()，insertColumns)(), removeRows(),  removeColumns()来进行插入和删除。
 
-​	该模型可以发射信号来指示改变。例如，
+​	该模型可以发射信号来指示改变。例如，无论何时模型可以操控的item的data改变的时候就会发送dataChanged()，由model所提供的头部的更改会导致headerDataChanged()被发射(emit)。如果体层数据的结构改变了，那么model会发送layoutChanged()来指示(indicate)所有链接到该model的views，它们应该重新显示(redisplay)item的视图，将新的结构纳入。
+
+​	
