@@ -2,10 +2,37 @@
 % 毕业论文.tex
 % 基于VxWorks的调试通道的设计与实现
 
-\documentclass[UTF-8]{ctexart}
+\documentclass[12pt,UTF-8]{ctexart}
 
-% 插图功能由graphicx宏包提供的。
-\usepackage{graphicx}
+%%% PACKAGES
+\usepackage{fontspec} % Font selection for XeLaTeX; see fontspec.pdf for documentation
+\defaultfontfeatures{Mapping=tex-text} % to support TeX conventions like ``---''
+\usepackage{xunicode} % Unicode support for LaTeX character names (accents, European chars, etc)
+%\usepackage{xltxtra} % Extra customizations for XeLaTeX
+%\setmainfont{Charis SIL} % set the main body font (\textrm), assumes Charis SIL is installed
+%\setsansfont{Deja Vu Sans}
+%\setmonofont{Deja Vu Mono}
+
+%\usepackage{booktabs} % for much better looking tables
+%\usepackage{array} % for better arrays (eg matrices) in maths
+%\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+%\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+%\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+% These packages are all incorporated in the memoir class to one degree or another...
+
+\usepackage{graphicx} % support the \includegraphics command and options
+% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% SECTION TITLE APPEARANCE
+%\usepackage{sectsty}
+%\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+%%% ToC (table of contents) APPEARANCE
+%\usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+%\usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+%\renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+%\renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
 
 
 %*******************设置页边距*****************************
@@ -13,43 +40,34 @@
 %假设将纸张设置为长度20cm,宽15cm,左边距1cm,右边距2cm,上边距3cm,下边距4cm
 %\geometry{papersize={20cm,15cm}}
 \geometry{a4paper}
-\geometry{left=1cm,right=2cm,top=3cm,bottom=4cm}
+%\geometry{left=1cm,right=2cm,top=3cm,bottom=4cm}
+% \geometry{margin=2in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+%   read geometry.pdf for detailed page layout information
 %************************************************
 
 
-%*******************设置页眉页尾*****************************
-\usepackage{fancyhdr}
-\pagestyle{fancy}
-%页眉
-\lhead{}
-\chead{华中科技大学硕士学位论文}
-\rhead{}
-%页尾
-\lfoot{}
-\cfoot{\thepage}
-\rfoot{}
+%******************* HEADERS & FOOTERS*****************************
+\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+\pagestyle{fancy}  % options: empty , plain , fancy 
+\lhead{} \chead{华中科技大学硕士学位论文} \rhead{}
+\lfoot{} \cfoot{\thepage} \rfoot{}
 %页眉和正文之间设置一道宽度为0.4pt的横线分割
-\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrulewidth}{0.4pt} % customise the layout...
 \renewcommand{\headwidth}{\textwidth}
 \renewcommand{\footrulewidth}{0pt}
 %************************************************
 
+%%% END Article customizations
 
 \title{基于Vxworks的调试通道的设计与实现}
 \author{Joe}
 \date{\today}
-
-% 设置参考文献的格式
-\bibliographystyle{plain}
+\bibliographystyle{plain} % 设置参考文献的格式
 
 \begin{document}
-
-% maketitle控制序列能够将导言区中定义的标题、作者、日期按照预定的格式展现出来。
-\maketitle
-
-%直接使用tableofcontents生成的目录中不会包含有参考文献那一章。
-\tableofcontents
-
+\maketitle % maketitle控制序列能够将导言区中定义的标题、作者、日期按照预定的格式展现出来。
+\tableofcontents 
 
 \section{绪论} 
 
@@ -97,7 +115,6 @@ is in the center of 天安门
 \section{总结与展望}
 
 
-% 引入参考文献，需要有reference.bib文件
-\bibliography{reference}
+\bibliography{reference} % 引入参考文献，需要有reference.bib文件
 
 \end{document}
