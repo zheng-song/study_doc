@@ -105,7 +105,9 @@ int main(int argc, char *argv[])
     QListView *list = new QListView(splitter);
     list->setModel(model);
     list->setRootIndex(model->index(QDir::currentPath()));
-
+	
+  	splitter->addWidget(list);
+    splitter->addWidget(tree);
     splitter->setWindowTitle("Two views onto the same directory model");
     splitter->show();
     return a.exec();
@@ -716,6 +718,14 @@ void SpinBoxDelegate::updateEditorGeometry(QWidget *editor,\
 ​	编辑完成后，delegate会给别的组件提供有关于编辑处理结果的提示，也提供用于后续编辑操作的一些提示。这可以通过发射带有某种hint的closeEditor()信号完成。这些信号会被安装在spin box上的缺省的QItemDelegate事件过滤器捕获。对这个缺省的事件过滤来讲，当用户按下回车键，delegate会对model中的数据进行提交，并关闭spin box。我们可以安装自己的事件过滤器以迎合我们的需要，例如，我们可以发射带有EditNextItem hint的closeEditor()信号来实现自动开始编辑view中的下一项。
 
 
+
+
+
+-----
+
+
+
+## 一个QAbstractItemModel使用样例
 
 
 
