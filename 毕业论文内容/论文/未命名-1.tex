@@ -1,102 +1,20 @@
-% -*-coding:UTF-8-*-
-% 毕业论文.tex
-% 基于VxWorks的调试通道的设计与实现
-
-\documentclass[UTF-8]{ctexart}
-
-% 插图功能由graphicx宏包提供的。
-\usepackage{graphicx}
-
-
-%*******************设置页边距*****************************
-\usepackage{geometry}
-%假设将纸张设置为长度20cm,宽15cm,左边距1cm,右边距2cm,上边距3cm,下边距4cm
-%\geometry{papersize={20cm,15cm}}
-\geometry{left=1cm,right=2cm,top=3cm,bottom=4cm}
-%************************************************
-
-
-%*******************设置页眉页尾*****************************
-\usepackage{fancyhdr}
-\pagestyle{fancy}
-%页眉
-\lhead{}
-\chead{华中科技大学硕士学位论文}
-\rhead{}
-%页尾
-\lfoot{}
-\cfoot{\thepage}
-\rfoot{}
-%页眉和正文之间设置一道宽度为0.4pt的横线分割
-\renewcommand{\headrulewidth}{0.4pt}
-\renewcommand{\headwidth}{\textwidth}
-\renewcommand{\footrulewidth}{0pt}
-%************************************************
-
-
-\title{基于Vxworks的调试通道的设计与实现}
-\author{Joe}
-\date{\today}
-
-% 设置参考文献的格式
-\bibliographystyle{plain}
-
-\begin{document}
-
-% maketitle控制序列能够将导言区中定义的标题、作者、日期按照预定的格式展现出来。
-\maketitle
-
-%直接使用tableofcontents生成的目录中不会包含有参考文献那一章。
-\tableofcontents
-
-
-\section{绪论} 
-
-
-
-\subsection{课题的背景以及意义}
-
-\paragraph{Tian'anmen square}
-is the center of beijing
-\subparagraph{chairman mao}
-is in the center of 天安门
-
-1. 分析嵌入式实时操作系统VxWorks的特点和其市场定位。
-
-2. USB接口和串口的特点及使用场景。
-
-3. 提出为什么要在VxWorks这个操作系统上实现USB口转串口，并给出本课题的实际来源和市场需求。
-
-\subsection{国内外概况}
-
-
-\subsection{论文的主要内容和组织结构}
-
-
-
-
-\section{实时操作系统VxWorks}
-
-
-
-
-\section{驱动程序的开发}
-
-
-
-\section{应用层程序接口封装}
-
-
-\section{Windows客户端接收及管理程序的设计}
-
-
-\section{系统的功能测试}
-
-
-\section{总结与展望}
-
-
-% 引入参考文献，需要有reference.bib文件
-\bibliography{reference}
-
-\end{document}
+\documentclass{article}
+  
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \usepackage{geometry}
+  \geometry{a4paper}
+  
+  \usepackage[frenchb]{babel}
+  
+  \title{Premier document}
+  \author{Un TeXnicien}
+  \date{}
+  
+  \begin{document}
+  \maketitle
+  
+  Voici un texte accentué en français!
+  
+  \end{document}
+  
