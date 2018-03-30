@@ -1,8 +1,105 @@
-## 终端的LINE模式和RAW模式
+# 以下内容来自VxWorks Programmer's Guide
+
+## 2. basic OS
+
+### 2.1 简介
+
+​	现代实时系统基于多任务和任务间通信的互补概念。多任务环境允许将实时应用程序构建为一组独立任务，每个任务都有自己的执行线程和一组系统资源。任务间通信设施允许这些任务同步并进行通信以协调其活动。在VxWorks中，任务间的通信工具包括快速信号量、消息队列、管道、套接字。
+
+​	实时系统的另外一个关键设施是硬件中断处理，因为中断是通知系统发生外部事件的常用机制。为了尽可能的快速响应中断，VxWorks中的中断服务例程(ISR)在任何任务的上下文之外的特定上下文中运行(*interrupt service routines (ISRs)* in VxWorks run in a special context of their own, outside any task's context.)。
+
+
+
+
+
+
+
+
+
+## I/O System
+
+### 4.1 介绍	
+
+VxWorks I/O系统为基本I/O和缓冲I/O提供了标准C库。基本I/O库是UNIX兼容的；缓冲I/O库是ANSI C兼容的。==在内部，VxWorks I / O系统具有独特的设计，使其比大多数其他I / O系统更快，更灵活。这些是实时系统中的重要属性。==
+
+![VxWorks I/O系统概述](https://upload-images.jianshu.io/upload_images/6128001-179cacc6be802f2b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+
 
 Terminal的COM的工作模式一般为LINE模式，即发现行结束标志(ENTER)才发送一次缓冲数据。 此处VxWorks Host上的COM的工作模式为RAW，无缓冲。LINE模式和RAW模式的区别参考VxWorks Programmer‘s Guide。
 
-​	TTY设备有两种工作模式：RAW模式和LINE模式，在RAW模式下，每一个刚从设备输入的字符对于读者都是有效的；在LINE模式下所有的输入字符都会被存储，直到NELLINE(ENTER)字符被输入。可以使用带FIOSETOPTIONS功能的ioctl()程序来进行设置。
+### 4.2 文件、设备和驱动程序
+
+​	在VxWorks中，应用程序通过打开命名*文件来*访问I / O设备。一个*文件*可以引用以下两件事之一：
+
+- 非结构化的“ *原始* ” *设备，*例如串行通信通道或任务管道。
+- 在结构化、包含文件系统的随机存取设备上的“逻辑文件”。
+
+VxWorks I / O系统为驱动程序处理每个特定设备提供了相当大的灵活性。驱动程序符合这里介绍的传统用户视图，但可能会有不同的细节。==虽然所有I / O都是针对指定文件的，但它可以在两个不同的级别完成：*基本*和*缓冲*。这两者在缓冲数据的方式和可以进行的调用类型方面有所不同。==
+
+
+
+### 4.3 基本I/O
+
+​	基本I/O是VxWorks中最低级别的I/O。基本I / O接口与标准C库中的I / O原语是源兼容的。有7个基本I/O调用，如下表所示：
+
+| Call     | Description                              |
+| -------- | ---------------------------------------- |
+| creat( ) | Creates a file.                          |
+| delete() | Deletes a file.                          |
+| open()   | Opens a file. (Optionally, creates a file.) |
+| close()  | Closes a file.                           |
+| read()   | Reads a previously created or opened file. |
+| write()  | Writes to a previously created or opened file. |
+| ioctl()  | Performs special control functions on files. |
+
+
+
+### 4.7.1 串行I/O设备(终端和伪终端)
+
+​	VxWorks提供终端和伪终端设备驱动程序（*tty*和*pty*驱动程序）。的*TTY*驱动程序是实际终端; 的*PTY*驱动程序用于模拟终端的进程。这些伪终端在远程登录设备等应用中非常有用。
+
+​	VxWorks串行I / O设备是缓冲的串行字节流。每个设备都有一个用于输入和输出的环形缓冲区（循环缓冲区）。从*tty*设备读取提取输入环中的字节。写入*tty*设备会将字节添加到输出环中。在系统初始化期间创建设备时指定每个环形缓冲区的大小。
+
+
+
+#### RAW模式和LINE模式
+
+​	TTY设备有两种工作模式：RAW模式和LINE模式，RAW模式是默认的模式。在RAW模式下，每一个刚从设备输入的字符对于读者都是有效的；在LINE模式下所有的输入字符都会被存储，直到NELLINE(ENTER)字符被输入。可以使用带FIOSETOPTIONS功能的ioctl()程序来进行设置。
+
+
+
+
+
+### 4.8 VxWorks和主机系统I/O之间的区别
+
+VxWOrks中最常见的I/O使用的是与UNIX和Windows中的I/O完全兼容的源，但是，注意以下的区别：
+
+- 设备配置：在VxWorks中可以动态的安装和移除设备驱动程序。
+- 文件描述符：在UNIX和WINDOWS中fd对每一个进程都是唯一的。在VxWorks中，除了标准的输入，标准输出和标准错误以外，fd是全局实体，可以由任何任务访问，这可以是任务特定的。
+- I/O控制：传递给ioctl()函数的具体参数可以在UNIX和VxWorks之间有所不同。
+- 驱动程序例程：在UNIX中设备驱动程序以系统模式执行，不能够被抢占。而在VxWorks当中，驱动程序例程可以被抢占，因为他们在调用他们的任务的上下文中执行。
+
+
+
+###  4.9 内部结构
+
+
+
+#### 4.9.5 驱动程序支持库
+
+下表中的子例程库可以帮助编写设备驱动程序。通过使用这些库，大多数遵循标准协议的设备驱动程序只需要编写几页与设备相关的代码即可完成。有关详细的信息，请参阅每个库的参考条例。
+
+| Library  | Description                          |
+| -------- | ------------------------------------ |
+| errnoLib | Error status library                 |
+| ftpLib   | ARPA File Transfer Protocol library  |
+| ioLib    | I/O interface library                |
+| iosLib   | I/O system library                   |
+| intLib   | Interrupt support subroutine library |
+| rngLib   | ring buffer subroutine library       |
+| ttyDrv   | Terminal driver                      |
+| wdLib    | Watchdog timer subroutine library    |
 
 
 
