@@ -1,4 +1,12 @@
+%使用hustthesis这个模板。
+% draft版本的正文页包括页眉(“华中科技大学xx学位论文”)、页眉修饰线(双线)、页脚(页码)和页脚修饰线(单线)。
+% final版本的正文页不包括页眉、页眉修饰线和页脚修饰线，仅包 含页脚（页码）。如果不指定，默认设置为final。
+
+% degree用来指定论文的种类
+% language用来指定论文语言。特别的，如果设定为english-draft，将会剔除论文中的所有中文内容，这有利于在未安装中文字体的环境中使用。如果不指定，默认设置为 chinese。
+
 %\documentclass[format=draft,language=chinese,degree=bachelor]{hustthesis}
+
 \documentclass[format=final,language=chinese,degree=bachelor]{hustthesis}
 
 \stuno{M201672905}
@@ -30,15 +38,29 @@
 
 \begin{document}
 
+% frontmatter用于设定论文的状态、改变样式，其具体使用见简单示例。
+% frontmatter用在文档最开始，表明文档的前言部分（如封面，摘要，目录等）的开 始。
 \frontmatter
+
+% maketitle的作用和makecover的作用相同，用于生成封面和版权页面
 \maketitle
+
+% makeabtract用于生成中英文的摘要页面。
 \makeabstract
+
+% tableofcontents用于生成目录
 \tableofcontents
+
+% listoffigures 和 listoftables 分别用于生成图片和表格索引，可以根据要求在论文的前言中使用或者是在附录中使用
 %\listoffigures
 %\listoftables
+
+% mainmatter表示论文正文的开始。
 \mainmatter
 
 \chapter{绪论}\label{chapter:1}
+
+VxWorks操作系统是美国WindRiver公司于1983年推出的一种嵌入式实时操作系统(RTOS)，是一个运行在目标机上的高性能、可裁剪的实时操作系统，是一个专门为嵌入式实时系统设计开发的操作系统，其具有良好的持续发展能力、高性能的内核以及友好的用户开发环境，为开发人员提供了高效的实时多任务调度、中断管理、实时的系统资源以及实时的任务间通信。在嵌入式实时操作系统领域当中占有一席之地。VxWorks支持X86、PowerPC、ARM等众多主流的处理器，且在各种CPU平台上提供了统一的编程接口和一致的运行环境。在军事、航空航天、工业控制、通信等高精尖以及实时性要求极高的领域当中，有着更加广泛而深入的应用。应用实例包括1997年火星表面登入的火星探测器、爱国者导弹、飞机导航、F-16、FA-18战斗机等。自从对我国的销售解禁之后，VxWorks也大量的应用于我国的军事、国防工业当中。
 
 \section{第一层}\label{sec:1}
 \subsection{第二层}\label{sec:2}
@@ -182,7 +204,7 @@ c & d \\
 \end{figure}
 
 \section{参考文献示例}
-这是一篇中文参考文献\cite{TEXGURU99}；这是一篇英文参考文献\cite{knuth}；同时引用\cite{TEXGURU99,knuth}。
+这是一篇中文参考文献\cite{Stone_1998}；这是一篇英文参考文献\cite{9787508342894}；同时引用\cite{9780124467422,bamboosilk}。
 
 \section[\textbackslash{}autoref 测试]{\texttt{\textbackslash{}autoref} 测试}
 
@@ -199,16 +221,28 @@ c & d \\
   \item[证明环境] \autoref{def:1},\autoref{proposition:1},\autoref{axiom:1},\autoref{lemma:1},\autoref{theorem:1},\autoref{proof:1}
 \end{description}
 
+% backmatter用于表示论文的正文结束
 \backmatter
 
+%ack 环境用于致谢页面
 \begin{ack}
 致谢正文。
 \end{ack}
 
-\bibliography{ref-example}
+% bibliography用于生成参考文献。
+\bibliography{lunwenSource/myref.bib}
 
+% appendix环境用于附录环境。即可以将附录置于appendix环境当中。如：
+% \begin{appendix}
+%  <content>
+% \end{appendix}
+
+% 直接使用\appendix 则表明后文均为附录。如：
+% \appendix
+%  <content> 
 \appendix
 
+% publications环境用于已经发表了的论文的页面，一般用于附录当中，使用上同enumerate环境
 \begin{publications}
     \item 论文1
     \item 论文2
