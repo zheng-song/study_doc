@@ -1,24 +1,13 @@
 \begin{thebibliography}{1}
 
-\bibitem{Stone_1998}
-Stone J~A, Howard L~P.
-\newblock A simple technique for observing periodic nonlinearities in Michelson
-  interferometers.
-\newblock Precision Engineering, 1998, 22(4):220--232.
+\bibitem{Wind2003VxWorks}
+River W.
+\newblock VxWorks程序员指南.
+\newblock 清华大学出版社, 2003.
 
-\bibitem{9787508342894}
-朱印红, 袁衍明.
-\newblock  Dreamweaver完美网页设计——技术入门篇, 第一版 ed.
-\newblock 北京: 中国电力出版社, 2006.
-
-\bibitem{9780124467422}
-Lewis J~S.
-\newblock Physics and Chemistry of the Solar System, Revised Edition.
-\newblock ACADEMIC PR INC, 1997.
-
-\bibitem{bamboosilk}
-陈剑.
-\newblock 上博简《民之父母》“而得既塞於四海矣”句解释.
-\newblock  {\url{http://www.bamboosilk.org/Wssf/2003/chenjian03.htm}}.
+\bibitem{徐媛媛2003嵌入式实时操作系统的设备驱动}
+徐媛媛.
+\newblock 嵌入式实时操作系统的设备驱动: [PhD Dissertation].
+\newblock 华中科技大学, 2003.
 
 \end{thebibliography}
