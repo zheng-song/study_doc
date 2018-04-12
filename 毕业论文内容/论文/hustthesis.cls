@@ -179,7 +179,8 @@
 \linespread{1.3}\selectfont
 \RequirePackage{geometry}
 \geometry{
-  top=1.77in,
+%  top=1.77in,
+  top=0.8in,
   bottom=0.8in,
   left=1.1in,
   right=1.1in,

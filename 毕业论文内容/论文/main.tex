@@ -1,3 +1,6 @@
+
+% !TeX program = xelatex
+
 %使用hustthesis这个模板。
 % draft版本的正文页包括页眉(“华中科技大学xx学位论文”)、页眉修饰线(双线)、页脚(页码)和页脚修饰线(单线)。
 % final版本的正文页不包括页眉、页眉修饰线和页脚修饰线，仅包 含页脚（页码）。如果不指定，默认设置为final。
@@ -5,8 +8,12 @@
 % degree用来指定论文的种类
 % language用来指定论文语言。特别的，如果设定为english-draft，将会剔除论文中的所有中文内容，这有利于在未安装中文字体的环境中使用。如果不指定，默认设置为 chinese。
 
-\documentclass[format=draft,language=chinese,degree=bachelor]{hustthesis}
-%\documentclass[format=final,language=chinese,degree=bachelor]{hustthesis}
+
+\documentclass[format=draft,language=chinese,degree=master]{hustthesis}
+%\documentclass[format=final,language=chinese,degree=master]{hustthesis}
+
+%使用下面的这两个宏包来生成带书签和超链接的PDF文件。
+\usepackage[pdftex,CJKbookmarks=true,colorlinks=true]{hyperref}
 
 \stuno{M201672905}
 \schoolcode{10487}
@@ -114,11 +121,31 @@ VxWorks操作系统是美国WindRiver公司于1983年推出的一种嵌入式实
     \item[解释环境]  解释内容
 \end{description}
 
+
+
 \clearpage
 \chapter{实时操作系统VxWorks}
+\section{概述}
+\subsection{实时操作系统}
+实时操作系统(Real Time Operation System)是整个实时系统的核心。POSIX1003.1标准为RTOS下了一个简单的定义：RTOS是能够在有限的响应时间内为应用提供所要求级别服务的操作系统\cite{Renard20081003}。这个系统能够对任何时间要求苛刻的事件服务，能够在正确的时间内做正确的事情。实时系统按照实时的效果可以分为软实时和硬实时，一个好的实时操作系统能够使你的系统时钟满足要实现的需求，即使在系统的负荷很重的情况下。
+
 现代实时操作系统基于多任务和任务间通信的互补概念。多任务环境允许将实时应用程序构建为一组独立任务，每一个任务都有自己的执行线程和一组系统资源。任务间通信设施允许这些任务同步并进行协调其活动。在VxWorks中，任务间通信工具从快速信号量到消息队列，从管道到网络透明套接字。
 
-实时系统的另外一个关键设施是硬件中断处理，因为中断处理时通知系统发生外部时间的常用机制。为了尽可能快地响应中断，VxWorks中的中断服务例程(ISR)运行自己的特定上下文中，这个上下文在任何其他的任务上下文之外\cite{Wind2003VxWorks}。
+	实时系统的另外一个关键设施是硬件中断处理，因为中断处理时通知系统发生外部时间的常用机制。为了尽可能快地响应中断，VxWorks中的中断服务例程(ISR)运行自己的特定上下文中，这个上下文在任何其他的任务上下文之外\cite{Wind2003VxWorks}。
+
+操作系统的核心是内核。内核控制着计算机系统上的所有硬件和软件资源，在必要的时候给应用程序分配硬件资源，并执行相应的操作命令。
+
+	内核的主要功能为以下的四种：
+
+\bullet 系统的内存管理：不仅可以管理服务器上的可用物理内存，还可以创建和管理虚拟内存。
+
+\bullet 软件程序管理：内核控制着系统上运行着的所有程序。
+
+\bullet 硬件设备管理：任何需要操作系统与之进行通信的设备都需要在内核的代码当中加入其驱动程序代码。驱动程序代码相当于应用程序和硬件设备间的中间人，允许内核和设备之间交换数据。
+
+\bullet 文件系统管理：不同于其他的一些操作系统，Linux内核支持通过不同类型的文件系统从硬盘当中读写数据。除了自有的诸多文件系统之外，Linux还支持从其他的操作系统(如windows)采用的文件系统中读写数据。内核必须在编译时就加入对所有可能用到的文件系统的支持。Linux内核采用虚拟文件系统(Virtual File System,VFS)作为和每一个文件系统交互的接口。这为Linux内核同任何类型文件系统通信提供了一个标准的接口，当每个文件系统都被挂载和使用时，VFS将信息都缓存在内存当中。
+
+VxWorks是一种基于微内核技术的实时操作系统。
 
 
 \section{代码环境}
@@ -238,7 +265,7 @@ c & d \\
 \end{ack}
 
 % bibliography用于生成参考文献。
-\bibliography{lunwenSource/myref.bib}
+\bibliography{ref/myref.bib}
 
 % appendix环境用于附录环境。即可以将附录置于appendix环境当中。如：
 % \begin{appendix}

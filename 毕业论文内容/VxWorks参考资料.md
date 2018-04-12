@@ -12,10 +12,6 @@
 
 
 
-
-
-
-
 ## I/O System
 
 ### 4.1 介绍	
@@ -340,5 +336,9 @@ VxWorks的基本I/O例程open()和creat()通常不会返回上面三个描述符
 
 
 
+# 参考书籍
 
+[基于VxWorks的嵌入式实时系统设计](http://www.jb51.net/books/261984.html)
+
+​	
 

@@ -1,5 +1,11 @@
 \begin{thebibliography}{1}
 
+\bibitem{Renard20081003}
+Renard K~G, Nichols M~H, Woolhiser D~A, et~al.
+\newblock 1003.1-2008 - IEEE Standard for Information Technology- Portable
+  Operating System Interface (POSIX) Base Specifications, Issue 7.
+\newblock 2008, c1-3826.
+
 \bibitem{Wind2003VxWorks}
 River W.
 \newblock VxWorks程序员指南.
