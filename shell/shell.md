@@ -395,3 +395,40 @@ CREATE_MAIL_SPOOL=yes
 
 要想在创建用户时改变默认值或默认行为,可以使用命令行参数。具体的可以通过man查看。
 
+
+
+### 3.2 理解文件权限
+
+​	文件权限来自umask 。umask 命令可以显示和设置这个默认权限。
+
+```shell
+$ umask
+0022
+$
+```
+
+在大多数Linux发行版中, umask 值通常会设置在/etc/profile启动文件中,不过有一些是设置在/etc/login.defs文件中的(如Ubuntu)。可以用 umask 命令为默认 umask 设置指定一个新值。
+
+例如：
+
+```shell
+$ umask 026
+$ touch newfile2
+$ ls -l newfile2
+-rw-r----- 1 rich 0 Sep 20 19:46 newfile2
+$ 
+```
+
+在把 umask 值设成 026 后,默认的文件权限变成了 640 ,因此新文件现在对组成员来说是只读的,而系统里的其他成员则没有任何权限。
+
+​	umask 值同样会作用在创建目录上
+
+```shell
+$ mkdir newdir
+$ ls -l
+drwxr-x--x 2 rich rich 4096 Sep 20 20:11 newdir/
+$
+```
+
+​	由于目录的默认权限是 777 , umask 作用后生成的目录权限不同于生成的文件权限。umask值 026 会从 777 中减去,留下来 751 作为目录权限设置。
+
