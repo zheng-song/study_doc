@@ -336,9 +336,17 @@ VxWorks的基本I/O例程open()和creat()通常不会返回上面三个描述符
 
 
 
-# 参考书籍
+# 参考文献
 
 [基于VxWorks的嵌入式实时系统设计](http://www.jb51.net/books/261984.html)
+
+[嵌入式实时操作系统的设备驱动-华科硕士论文](http://xueshu.baidu.com/s?wd=paperuri%3A%28ffa25f88f13bba55c07adbbf5bf0f271%29&filter=sc_long_sign&tn=SE_xueshusource_2kduw22v&sc_vurl=http%3A%2F%2Fwww.doc88.com%2Fp-0989361693174.html&ie=utf-8&sc_us=4497328787020817259)
+
+[基于USB接口的数据广播终端的设计与实现-华科硕论文](http://xueshu.baidu.com/s?wd=paperuri%3A%2825dbf283a8139b1033b64cab072e4787%29&filter=sc_long_sign&tn=SE_xueshusource_2kduw22v&sc_vurl=http%3A%2F%2Fwww.doc88.com%2Fp-0522029096613.html&ie=utf-8&sc_us=750599083948907462)
+
+
+
+
 
 ​	
 

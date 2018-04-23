@@ -1,4 +1,5 @@
 % Encoding: UTF-8
+% @phdthesis条目为博士论文。不可少域author, title, school, year.可省略域type, address, month, note.
 @phdthesis{徐媛媛2003嵌入式实时操作系统的设备驱动,
   title={嵌入式实时操作系统的设备驱动},
   author={徐媛媛},
@@ -6,6 +7,11 @@
   year={2003},
 }
 
+% @mastersthesis条目为硕士论文。 不可少域author, title, school, year.可省略域type, address, month, note.
+
+% @proceedings条目为会议论文集。不可少域title, year.可省略域editor,volume或number, series, address, month, organization, publisher, note.
+
+% @inproceedings条目为会议论文集中的一篇文章。不可少域author, title, booktitle, year. 可省略域editor, volume或number, series, pages, address, month, organization, publisher, note.
 @inproceedings{Renard20081003,
   title={1003.1-2008 - IEEE Standard for Information Technology- Portable Operating System Interface (POSIX) Base Specifications, Issue 7},
   author={Renard, K. G and Nichols, M. H and Woolhiser, D. A and Osborn, H. B},
@@ -21,6 +27,7 @@
 }
 
 
+% @article条目为期刊或杂志上的一篇文章。不可少域author, title, journal, year.可省略域volume, number, pages, month, note.
 @article{肖竟华2003嵌入式实时操作系统,
   title={嵌入式实时操作系统VxWorks设备驱动程序设计与实现},
   author={肖竟华 and 邱奕敏},
@@ -47,6 +54,7 @@
 }
 
 
+% @book条目为有确定出版社的书籍。不可少域author或editor, title, publisher, year.可省略域volume或number, series, address, edition, month, note.
 
 @book{Wind2003VxWorks,
   title={VxWorks程序员指南},
@@ -114,6 +122,13 @@
   year={2001},
 }
 
+@book{USB2.0硬件设计,
+  title={USB 2.0硬件设计},
+  author={萧世文 and 宋延清},
+  publisher={清华大学出版社},
+  year={2006},
+}
+
 @book{圈圈教你玩USB,
   title={圈圈教你玩USB},
   author={刘荣},
@@ -126,4 +141,14 @@
   publisher={中国铁道出版社},
   year={2014},
 }
+
+% @misc条目为不属于其它任何类型的作品。不可少域没有。可省略域author, title, howpublished, month, year, note.
+
+@misc{WindowsEmbeddedCE6.0,
+    author = "百度百科",
+    title = "Windows Embedded CE6.0",
+    howpublished = "Website",
+    year = {2010},
+    note = {\url{https://baike.baidu.com/item/Windows\%20Embedded\%20CE6.0\/6027594}}
+};
 @Comment{jabref-meta: databaseType:bibtex;}
