@@ -344,6 +344,8 @@ VxWorks的基本I/O例程open()和creat()通常不会返回上面三个描述符
 
 [基于USB接口的数据广播终端的设计与实现-华科硕论文](http://xueshu.baidu.com/s?wd=paperuri%3A%2825dbf283a8139b1033b64cab072e4787%29&filter=sc_long_sign&tn=SE_xueshusource_2kduw22v&sc_vurl=http%3A%2F%2Fwww.doc88.com%2Fp-0522029096613.html&ie=utf-8&sc_us=750599083948907462)
 
+[基于实时操作系统VxWorks的驱动程序的开发](http://xueshu.baidu.com/s?wd=paperuri%3A%28667bc32b4499adc634eb82143ffb30ba%29&filter=sc_long_sign&tn=SE_xueshusource_2kduw22v&sc_vurl=http%3A%2F%2Fwww.doc88.com%2Fp-2793084075526.html&ie=utf-8&sc_us=13782008646235443649)
+
 
 
 
