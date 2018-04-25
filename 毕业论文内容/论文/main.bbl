@@ -6,6 +6,11 @@ Renard K~G, Nichols M~H, Woolhiser D~A, et~al.
   Operating System Interface (POSIX) Base Specifications, Issue 7.
 \newblock 2008, c1-3826.
 
+\bibitem{嵌入式实时操作系统VxWorks及其开发环境Tornado}
+孔祥营.
+\newblock 嵌入式实时操作系统VxWorks及其开发环境Tornado.
+\newblock 中国电力出版社, 2002.
+
 \bibitem{Wind2003VxWorks}
 River W.
 \newblock VxWorks程序员指南.

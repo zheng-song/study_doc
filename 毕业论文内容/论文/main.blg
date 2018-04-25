@@ -5,43 +5,43 @@ The style file: hustthesis.bst
 A level-1 auxiliary file: data/chap01.aux
 A level-1 auxiliary file: data/chap02.aux
 Database file #1: ref/myref.bib.bib
-Warning--I didn't find a database entry for "•"
 Warning--I didn't find a database entry for "9787508342894"
 Warning--I didn't find a database entry for "9780124467422"
 Warning--I didn't find a database entry for "bamboosilk"
 Warning--empty booktitle in Renard20081003
+Warning--there's a publisher but no address in 嵌入式实时操作系统VxWorks及其开发环境Tornado
 Warning--there's a publisher but no address in Wind2003VxWorks
 Warning--there's a school but no address in 徐媛媛2003嵌入式实时操作系统的设备驱动
-You've used 3 entries,
+You've used 4 entries,
             2464 wiz_defined-function locations,
-            554 strings with 4183 characters,
-and the built_in function-call counts, 865 in all, are:
-= -- 81
-> -- 25
+            558 strings with 4332 characters,
+and the built_in function-call counts, 1003 in all, are:
+= -- 93
+> -- 29
 < -- 0
-+ -- 12
-- -- 6
-* -- 61
-:= -- 131
-add.period$ -- 10
-call.type$ -- 3
++ -- 14
+- -- 7
+* -- 63
+:= -- 153
+add.period$ -- 13
+call.type$ -- 4
 change.case$ -- 0
 chr.to.int$ -- 0
-cite$ -- 6
-duplicate$ -- 63
-empty$ -- 91
-format.name$ -- 7
-if$ -- 191
+cite$ -- 8
+duplicate$ -- 70
+empty$ -- 109
+format.name$ -- 8
+if$ -- 225
 int.to.chr$ -- 0
-int.to.str$ -- 3
-missing$ -- 3
-newline$ -- 18
-num.names$ -- 3
-pop$ -- 11
+int.to.str$ -- 4
+missing$ -- 5
+newline$ -- 23
+num.names$ -- 4
+pop$ -- 16
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 11
+skip$ -- 13
 stack$ -- 0
 substring$ -- 84
 swap$ -- 1
@@ -49,8 +49,8 @@ text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
-warning$ -- 3
-while$ -- 4
-width$ -- 4
-write$ -- 32
+warning$ -- 4
+while$ -- 5
+width$ -- 5
+write$ -- 42
 (There were 7 warnings)
