@@ -1,0 +1,27 @@
+\chapter{驱动程序的设计和实现}
+
+\section{设备驱动概述}
+	通常为了实现与应用程序的平台无关性，操作系统都会为应用程序提供一套标准的接口，VxWorks也不例外，这样就可以通过调整底层驱动或者是接近驱动那部分的操作系统中间层来提高应用层开发的效率，避免重复编码。在我们的通用操作系统(如Mac OS、Linux、Windows)当中，通常会将这套应用层的接口标准从操作系统中独立出来，专门以标准库的形式存在，这样可以屏蔽操作系统之间的差异，增强应用程序的平台无关性。
+	
+	VxWorks中也对应用层提供了一套标准的文件操作接口，实际上与GPOS提供接口类似，我们将其称作为标准I/O 库，VxWorks下由ioLib.c文件提供。ioLib.c文件提供如下标准接口函数：creat()、open()、unlink()、remove()、close()、rename()、read()、write()、ioctl()、lseek()、readv()、writev()等\cite{BSP开发人员指南}，VxWorks与通用操作系统有很大的一个不同点是：VxWorks不区分用户态和内核态，用户层可以直接对内核函数进行调用，而无需使用陷阱指令之类的机制，以及存在使用权限上的限制。因此VxWorks提供给应用层的接口无需通过外围库的方式，而是直接以内核文件的形式提供。
+	
+	在VxWorks中，应用程序
+
+
+\subsection{设备驱动的功能以及组成部分}
+\subsubsection{设备驱动程序结构}
+\subsubsection{驱动程序管理表}
+\subsubsection{驱动程序管理步骤}
+
+
+
+
+
+
+
+\section{USB转串口设备驱动程序的实现}
+
+\subsection{特定需求的单设备支持}
+
+
+\subsection{通用的多设备支持}
