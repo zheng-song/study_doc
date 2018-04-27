@@ -40,11 +40,6 @@
 \subsection{wind的多任务机制}
 现代实时系统基于多任务和任务间通信的互补概念。多任务环境允许将实时应用程序构建为一组独立任务，每个任务都有自己的执行线程和一组系统资源。任务间通信设施允许这些任务同步并进行通信以协调其活动。在VxWorks中，任务间的通信工具包括快速信号量、消息队列、管道、套接字。
 
-\begin{figure}[!h]
-\centering
-\includegraphics[width=.4\textwidth]{hust-title.pdf}
-\caption{一个图片}\label{fig:1}
-\end{figure}
 
 \subsection{wind的任务调度}
 
@@ -54,7 +49,25 @@
 \subsection{tadj}
 
 \section{VxWorsks上的USB协议栈}
-\subsection{USB协议}
-USB接口
+	USB(Universial Serial Bus,通用串行总线)是这十几年来应用在PC领域的最新型的接口技术，出现的契机是为了为了解决日益增加的PC外设与有限的主板插槽之间的矛盾，其实现的原理是由一些PC大厂商(Microsoft、Intel等)定制出来的，自从1995年在Comdex上展出以来至今已广泛地被各个PC厂家所支持。目前已经在各类外部设备中都广泛的采用USB接口。USB接口标准目前有三种：USB1.1，USB2.0和USB3.0。USB接口应用如此的广泛是由其独特和实用的特性决定的。USB的体系结构如图\autoref{fig:USB体系结构}所示
+\begin{figure}[!h]
+\centering
+\includegraphics[width=.4\textwidth]{USB体系结构.png}
+\caption{PNG}\label{fig:USB体系结构}
+\end{figure}
+	
+
+\subsection{USB数据传输的优势}
+	USB的主要有优点有：
+	\begin{enumerate}
+	\item 使用方便，支持热插拔：连接外设不必再打开主机箱，而且方便携带，允许在任何时候USB外设的热插拔，而且不必关闭主机的电源；USB外设没有需要用户选择的设置；例如端口地址和中断请求线；自动配置外设，当用户连接USB外设到一个正在运行的系统时，系统会自动的检测外设，载入合适的驱动软件(如果有的话)，并将其初始化；以上的特点使得USB外设符合便携易用的潮流。
+	\item 速度快：目前设备上使用大多数是USB 2.0的接口，最新生产的设备都配备了USB3.0的接口。USB2.0接口的理论速度可以达到480Mbps(即60MB/s)，并且可以向下兼容USB1.1。USB3.0接口的理论速度可以达到5.0Gbps(即640MB/s)，并提供USB2.0的兼容。
+	\item 连接灵活：一个USB主控制器理论上可以连接127个设备
+	\end{enumerate}
+
+
 \subsection{VxWorks上的USB驱动程序结构}
+
+\section{CP2012模块}
+
 
