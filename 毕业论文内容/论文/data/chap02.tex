@@ -68,16 +68,88 @@
 
 \subsection{VxWorks上的USB驱动程序结构}
 
-\section{CP2012模块}
-\subsection{CP2102简介}
 
-cp2102的电路框图如\autoref{fig:cp2102电路框图}所示.
+\section{CP2012模块}
+在生产实践和科学研究当中经常需要在上位机和下位机中进行数据和控制的传输，这种数据、控制传输都需要通过串口来进行，而现在生产的设备中大多都不再配置串口，仅仅保留了USB接口，于是需要通过一些手段将USB转换为RS232，这时就出现了一些专用的USB转UART芯片，CP2102就是这样一种芯片。CP2102与其他同类型的芯片相比具有功耗更低、体积更小、集成度更高(仅需少量外部元件)、价格更低等优点。因此我们此次选择这个芯片作为调试通道的设计当中使用的芯片。
+\subsection{CP2102简介}
+	CP2102是SILICON LABORATORIES推出的USB与RS232接口转换芯片，是一种高度集成的USB-UART桥接器，提供一个使用最小化的元件和PCB空间实现RS232转USB的简便的解决方案。CP2102芯片包含有一个USB2.0全速功能控制器，EEPROM，USB收发器，振荡器和带有全部的调制解调器控制信号的异步串行数据总线(UART)，CP2102将全部的部件集成在一个5mm*5mm MLP-28封装的IC当中\cite{CP2102}，cp2102的电路框图如\autoref{fig:cp2102电路框图}所示。
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=.4\textwidth]{./graphics/cp2102-circuit-diagram.pdf}
+\includegraphics[width=1.0\textwidth]{./graphics/cp2102-circuit-diagram.pdf}
 \caption{cp2102电路框图}\label{fig:cp2102电路框图}
 \end{figure}
+
+	CP2102是一个USB/RS232双向转换芯片，一方面可以从主机接收USB数据并将其转换为RS232信息格式流发送给外设，另外一方面可以从RS232外设接收数据转换为USB数据格式传送回主机，这些工作都会由芯片自动完成。使用时我们只需要将数据通过USB的数据包发送给CP2102芯片即可，芯片会自动进行解析和控制。
+	
+	在CP2102的内部有内置的和计算机进行通信的USB协议栈，在设备驱动的支持下，PC会将该设备识别为一个虚拟的串口。此时用户可以按照通用串口的方式来使用这个虚拟的串口。	
+\begin{enumerate}
+\item CP2102的USB功能控制器和收发器：CP2102的USB功能控制器是一个符合USB2.0协议的全速器件，这个器件负责管理USB和UART之间的所有数据传输以及由USB主控制器发出的命令请求和用于控制UART功能的命令。
+\item 异步串行数据总线(UART)接口：CP2102的UART接口包括TXD(发送)和RXD(接收)数据信号以及RTS，CTS，DSR，DTR，DCD和RI控制信号。ART支持RTS/CTS，DSR/DTR和X-on/X-Off握手。且支持编程使UART支持各种数据格式和波特率。ART的数据格式和波特率的编程是在PC的COM口配置期间进行的。可以使用的数据格式和波特率见\autoref{CP2102可配置参数}。
+\item 内部EEPROM:CP2102内部集成了一个EEPROM用于存储设备原始制造商定义的USB供应商ID、产品ID、产品说明、电源参数、器件版本号和器件序列号等信息\cite{CP2102}。USB配置数据的定义是可选的，如果EEPROM没有被OEM的数据所填充的话，则设备会自动的使用一组默认的数据如\autoref{CP2102DefaultConfigure}所示。
+\end{enumerate}
+
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+{数据位} & {5,6,7,8} \\
+\hline
+{停止位} & {1,1.5，2} \\
+\hline
+{校验位} & {无校验，偶校验，奇校验，标志校验，间隔校验} \\
+\hline
+{波特率} & \tabincell{c}{600,1200,2400,4800,7200,9600,14400,16000,19200,28800，\\ 38400,51200,56000,57600,64000,76800,115200,128000,158600,\\ 230400,250000,256000，4608000,576000,921600}\\
+\hline
+\end{tabular} 
+\caption{CP2102可配置参数}\label{CP2102可配置参数}
+\end{table}
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+{\hei{Name}} & {\hei{Value}} \\
+\hline
+{Vendor ID} & {10C4h} \\
+\hline
+{Product ID} & {EA60h} \\
+\hline
+{Power Descriptor(attributes)} & \tabincell{c}{80h}\\
+\hline 
+{Power Descriptor(Max Power)} & {32h} \\
+\hline
+{Release Number} & {0100h} \\
+\hline
+{Serial Number} & {0001(63 characters maximum)} \\
+\hline
+{Product Description String} & \tabincell{c}{"CP2102 USB to UART Bridge Controller”(126 characters maximum)"} \\
+\hline
+\end{tabular}
+\caption{CP2102默认配置表}\label{CP2102DefaultConfigure}
+\end{table}
+
+
+
+
+\subsection{CP2102应用}
+	使用CP2102开发RS232转USB具有电路简单，运行可靠，成本低廉的优点，通常在使用CP2102进行串口扩展的时候所需要的外部器件是非常少的，仅仅需要2-3个去耦电容即可,在silicon给出的文档当中已经帮我们给出了一个最简单的连接电路图，如\autoref{fig:cp2102电路框图}所示，在REGIN的输入端加入一个去耦电容0.1uF与1.0uF并联。供电的电源由计算机的USB口提供，加上三只保护管即可。电路使用CP2102UART总线上的TXD/RXD两个引脚，其余的引脚都悬空。此次我们使用的是购买的已经制作好的CP2102模块如\autoref{fig:cp2102模块正反面}所示：
+\begin{figure}[h]
+\centering
+  \begin{subfigure}[b]{0.4\textwidth}
+  \includegraphics[width=\textwidth]{./graphics/cp2102Front.pdf}
+  \caption{CP2102模块正面}\label{fig:cp2102Front}
+  \end{subfigure}
+  ~
+  \begin{subfigure}[b]{0.4\textwidth}
+  \includegraphics[width=\textwidth]{./graphics/cp2102Rear.pdf}
+  \caption{CP2102模块反面}\label{fig:cp2102Rear}
+  \end{subfigure}
+\caption{CP2102模块正反面}\label{fig:cp2102模块正反面}
+\end{figure}
+	
+
 
 
 

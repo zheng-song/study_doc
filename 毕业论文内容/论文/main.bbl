@@ -11,6 +11,12 @@ Renard K~G, Nichols M~H, Woolhiser D~A, et~al.
 \newblock 嵌入式实时操作系统VxWorks及其开发环境Tornado.
 \newblock 中国电力出版社, 2002.
 
+\bibitem{CP2102}
+Lab S.
+\newblock CP2102DataSheet[EB/OL].
+\newblock Website, 2005.
+\newblock \url{https://www.silabs.com}.
+
 \bibitem{BSP开发人员指南}
 〔美〕WindRiver.
 \newblock VxWorks BSP开发人员指南（VxWorks开发人员指南丛书）.
