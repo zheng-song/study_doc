@@ -1,3 +1,220 @@
-\chapter{实时操作系统VxWorks}
-\section{概述}
-\subsection{实时操作系统}
+\chapter{应用层程序接口封装}
+	从VxWorks6.x开始引入了RTP(VxWorks Real Time Process Project)模式，这种模式的优点是应用程序之间互相独立、互不影响，而且增加了内核的稳定性，缺点是由于“内核态”与“用户态”的内存拷贝，其执行效率有所降低，随着CPU速度越来越快，这点效率的牺牲已经越来越不重要。相比较于传统的DKM（downloadable kernel module project），RTP适合多个团队独立运作，然后汇总联试，这种模式除了全局函数不能在shell里直接调用外，其对应用程序几乎不做任何约束，原有的DKM工程代码稍作修改即可正常运行。内核变化较大，需要添加较多的组件，内存需要较好的划分，为保持应用程序直接调用函数调试的习惯，需要封装接口供用户使用。
+
+\section{Log协议的设计}
+
+我们为调试信息制定的协议格式为：\backslash 03\backslash 03<L=日志级别;PN=任务ID;P=任务名;F=文件名;N=行号;T=时间>contents\backslash 04\backslash 04\\
+其中各部分的含义如下：
+
+\begin{itemize}
+\item \textbf{\backslash 03\backslash 03}：表示自定义的Log协议的数据包的开始；
+
+\item \textbf{<}:表示自定义的Log协议数据包头部的开始；
+
+\item \textbf{L}：表示日志的级别，我们在此将日志分为五个级别：
+	\begin{itemize}
+	\item e:表示error；
+	
+	\item w:表示warning；
+	
+	\item i:表示info；
+	
+	\item d:表示debug；
+	
+	\item o：表示其他信息。
+	\end{itemize}
+	
+\item \textbf{PN}:此处的内容是输出该条调试信息的任务的任务ID；
+
+\item \textbf{P}：此处的内容是输出该条调试信息的任务的任务名；
+
+\item \textbf{F}：此处的内容是输出该条调试信息的任务所在的文件名；
+
+\item \textbf{N}：此处的内容是该调试信息语句所在的文件的行号；
+
+\item \textbf{T}：此处的内容是这条调试信息被输出时候的系统时间；
+
+\item \textbf{>}:表示自定义的Log协议数据包头部的结束；
+
+\item \textbf{contents}：这个部分是调试信息的正文部分。
+
+\item \textbf{\backslash 04 \backslash 04}:表示自定义的 Log 协议数据包的结束。
+
+\end{itemize}\\
+
+
+\section{标准输出重定向接口的设计}
+	由于标准输出的重定向无法在RTP模式和task模式下使用同一种方法来实现，于是我们使用了两种方法来分别实现RTP模式和task模式下的标准输出重定向。
+\subsection{RTP模式下标准输出重定向}
+	RTP模式下的标准输出重定向流程如\autoref{fig:rtp-printf-reset}所示。部分关键代码如下：
+\lstset{language=C}
+\begin{lstlisting}
+int ResetStdOut(int usb_serial)
+{
+  ...
+	
+  _init_fd();
+  if(usb_serial == 1)
+  {
+    if(dup2(log_fd,STD_OUT) < 0)
+    {
+      printf("can not reset STDOUT to /hust_use_serial\n");	  
+	  return -1;
+	}
+  }
+  else
+  {
+    if (dup2(STDOUT_FD,STD_OUT) < 0)
+    {
+	  printf("can not reset STDOUT to /hust_use_serial\n");
+	  return -1;
+	}
+  }
+  
+  ...
+}
+\end{lstlisting}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.7\textwidth]{./graphics/rtp-printf-reset.pdf}
+\caption{RTP模式下标准输出重定向流程图}\label{fig:rtp-printf-reset}
+\end{figure}
+
+
+在RTP模式下使用dup2函数来实现标准输出的重定向，dup2函数的原型为：
+\lstset{language=C}
+\begin{lstlisting}
+int dup2(int oldfd, int newfd);
+\end{lstlisting}\\
+dup2()用于复制描述符oldFd到newFd的，其中oldFd是要被复制的文件描述符，newFd是制定的新文件描述符，如果newFd已经打开，它将首先被关闭。如果newFd等于oldFd，dup2会返回newFd，但是不会关闭它。函数调用成功时会返回新的文件描述符，所返回的新的描述子与参数oldFd给定的描述符字引用同一个打开的文件，即共享同一个系统打开文件表项。函数调用失败时会返回-1并设置errno。
+
+\subsection{task模式下标准输出重定向}
+在task模式下无法使用dup()/dup2()函数来进行标准输出的重定向，在task模式下VxWorks有专用的标准输出接口ioTaskStdSet(),我们在此模式下只能使用这个借口来实现重定向，task模式下的标准输出重定向如\autoref{fig:task-printf-reset}所示。部分关键代码如下：
+\lstset{language=C}
+\begin{lstlisting}
+int ResetStdOut(int usb_serial)
+{
+  ...
+	
+  _init_fd();
+  if(usb_serial == 1)
+  {
+    ioTaskStdSet(0,STD_OUT,log_fd);
+  }
+  else
+  {
+    ioTaskStdSet(0,STD_OUT,STDOUT_FD);
+  }
+  
+  ...
+}
+\end{lstlisting}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.7\textwidth]{./graphics/task-printf-reset.pdf}
+\caption{task模式下标准输出重定向流程图}\label{fig:task-printf-reset}
+\end{figure}
+
+ioTaskStdSet()是VxWorks专门用来进行任务级的重定向的函数。其函数原型为：
+\lstset{language=C}
+\begin{lstlisting}
+void ioTaskStdSet(int taskId, int stdFd, int newFd);
+\end{lstlisting}\\
+在VxWorks中每一个任务都有一个数组taskStd，用于表明这个任务的标准输入、标准输出、标准错误，函数ioTaskStdSet()的功能就是将特定任务的标准描述符重定向到newFd，newFd需要是一个文件或者设备的描述符。第一个参数taskId表示需要进行重定向的任务的ID(ID为0表示该任务本身)，第二个参数是需要被重定向的某个标准描述符(0,1,2),第三个参数是需要重定向到的文件描述符。该函数没有返回值。
+
+
+\section{Log接口的设计}
+	Log接口函数用于完成标准格式的log的输出，使用时只需要调用LogE()、LogW()、LogI()、LogD()、LogO()，这几个接口均为宏定义，定义在usb\_ logWrite.h当中，在使用时需要包含该头文件，作用是获取log协议所需要的部分信息，其代码如下所示：
+\lstset{language=C}
+\begin{lstlisting}
+#define LogE(format, ...) usb_logWrite('e',__FILE__,__LINE__,format,##__VA_ARGS__)
+
+#define LogD(format, ...) usb_logWrite('d',__FILE__,__LINE__,format,##__VA_ ARGS__)
+
+#define LogI(format, ...) usb_logWrite('i',__FILE__,__LINE__,format,##__VA_ ARGS__)
+
+#define LogW(format, ...) usb_logWrite('w',__FILE__,__LINE__,format,##__VA_ ARGS__)
+
+#define LogO(format, ...) usb_logWrite('o',__FILE__,__LINE__,format,##__VA_ ARGS__)
+
+extern int usb_logWrite(char level,char *fileName, int lineNum, const char * format, ...);
+\end{lstlisting}
+LogE(),LogW(),LogD(),LogO,LogI()均由usb\_ logWrite()函数来实现，usb\_ logWrite()函数实现真正的完整的协议封装和调用驱动发送的过程，usb\_ logWrite()完成协议头部信息的获取，包括日志的级别，发送该日志的进程号和进程名，打印该日志的文件的文件名，该日志在文件中所处的行号。并将这些信息封装在所定义的头部格式当中。最后将用户需要输出的信息放入协议的数据部分，并添加结束标志，然后调用驱动程序将该数据包发送出去。usb\_ logWrite()的部分关键代码如下所示：
+\lstset{language=C}
+\begin{lstlisting}
+int usb_logWrite(char level,char *fileName, int lineNum, const char * format, ...)
+{
+  ...
+   
+  struct timespec tp;
+  struct tm timeBuffer;
+  time_t nowSec;
+  char datetime[64];
+  clock_gettime(CLOCK_REALTIME,&tp);
+  nowSec = tp.tv_sec;
+  localtime_r(&nowSec,&timeBuffer);
+  timeLen = strftime(datetime,64,"%Y/%m/%d %H:%M:%S",&timeBuffer);
+  sprintf(datetime+timeLen,".%3.3ld",tp.tv_nsec/1000000L);
+
+  _init_fd();
+  if(fileName != NULL) 
+  {
+    char *rf = strrchr(fileName, '/');
+	if(rf != NULL) fileName = rf+1;
+  }
+
+  logWriteBuf[0]=0x03;
+  logWriteBuf[1]=0x03;
+  n = snprintf(&logWriteBuf[2],LOG_BUF_SIZE-2,"<L=%c;PN=%d;P=%s;F=%s;N=%d;T=%s>",level,Id,name,fileName,lineNum,datetime);
+  n+=2;
+  va_list argList;
+  va_start(argList,format);
+  m = vsnprintf(logWriteBuf+n,LOG_BUF_SIZE-n,format,argList);
+  va_end(argList);
+
+  if(m <= 0) 
+  {
+	m = snprintf(logWriteBuf+n,LOG_BUF_SIZE-n, "format error\n");
+  }
+  n += m;
+  
+  if(n > LOG_BUF_SIZE-2) n = LOG_BUF_SIZE-2;
+  logWriteBuf[n++] = 0x04;
+  logWriteBuf[n++] = 0x04;
+
+  write(log_fd, logWriteBuf, n);
+  return n;
+}
+\end{lstlisting}
+
+usb\_ logWrite()函数的实现在RTP模式和task模式之下是一样的，在task模式下只需包含usb\_ logWrite.h头文件即可，在RTP模式下需要包含usb\_ logWrite.h和usb\_ logWrite.c两个文件。
+
+\section{Windows下的日志分析工具}
+	由于日志分析工具并不是我们本次论文的介绍重点，此处我们只介绍调试信息的接收部分协议的解析相关的内容，对于其他的部分不做详细介绍；日志分析工具为Windows下使用QT开发的界面程序，其结构如\autoref{fig:日志分析工具结构图}所示，主界面如\autoref{fig:RoutonLog} 所示。
+\begin{figure}[!h]
+\centering
+\includegraphics[width=1.0\textwidth]{./graphics/routonLog-system-structure.pdf}
+\caption{日志分析工具结构图}\label{fig:日志分析工具结构图}
+\end{figure}
+\begin{figure}[!h]
+\centering
+\includegraphics[width=1.0\textwidth]{./graphics/RoutonLog.pdf}
+\caption{主机端日志分析工具界面}\label{fig:RoutonLog}
+\end{figure}\\
+\textbf{串口读取流程}
+
+当用户打开串口后，主窗口中的串口读取函数会对串口中的数据进行非堵塞地读取，并按协议格式进行解析、显示和存盘。
+首先，解析一下协议格式，每种日志级别的信息在日志显示框中会以不同的底色显示。为了提供系统的可用性，对不按协议格式发送的日志信息，本系统也做了合理的容错处理,主要是针对没有调用Log接口而是直接使用标准输出重定向输出的调试信息。对串口读取的日志信息进行一下的分类处理：
+
+
+
+
+每种情况都会寻找包头，如果找到就会解析，如果没找到则整体作为日志信息内容部分显示。另外，在符合协议标准的数据包中，内容部分是可以包含回车符的。
+
+串口读取和解析的流程图如\autoref{} 所示
+
+需要注意的是，串口读取和解析程序位于串口可读信号对应的槽中，也就是当串口可读时，会自动调用。
+
+
