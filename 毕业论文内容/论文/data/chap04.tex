@@ -191,7 +191,9 @@ int usb_logWrite(char level,char *fileName, int lineNum, const char * format, ..
 
 usb\_ logWrite()函数的实现在RTP模式和task模式之下是一样的，在task模式下只需包含usb\_ logWrite.h头文件即可，在RTP模式下需要包含usb\_ logWrite.h和usb\_ logWrite.c两个文件。
 
+
 \section{Windows下的日志分析工具}
+	
 	由于日志分析工具并不是我们本次论文的介绍重点，此处我们只介绍调试信息的接收部分协议的解析相关的内容，对于其他的部分不做详细介绍；日志分析工具为Windows下使用QT开发的界面程序，其结构如\autoref{fig:日志分析工具结构图}所示，主界面如\autoref{fig:RoutonLog} 所示。
 \begin{figure}[!h]
 \centering
@@ -200,21 +202,14 @@ usb\_ logWrite()函数的实现在RTP模式和task模式之下是一样的，在
 \end{figure}
 \begin{figure}[!h]
 \centering
-\includegraphics[width=1.0\textwidth]{./graphics/RoutonLog.pdf}
+\includegraphics[width=1.0\textwidth]{./graphics/routonLogNoRun.pdf}
 \caption{主机端日志分析工具界面}\label{fig:RoutonLog}
 \end{figure}\\
 \textbf{串口读取流程}
-
-当用户打开串口后，主窗口中的串口读取函数会对串口中的数据进行非堵塞地读取，并按协议格式进行解析、显示和存盘。
-首先，解析一下协议格式，每种日志级别的信息在日志显示框中会以不同的底色显示。为了提供系统的可用性，对不按协议格式发送的日志信息，本系统也做了合理的容错处理,主要是针对没有调用Log接口而是直接使用标准输出重定向输出的调试信息。对串口读取的日志信息进行一下的分类处理：
-
-
-
-
-每种情况都会寻找包头，如果找到就会解析，如果没找到则整体作为日志信息内容部分显示。另外，在符合协议标准的数据包中，内容部分是可以包含回车符的。
-
-串口读取和解析的流程图如\autoref{} 所示
-
-需要注意的是，串口读取和解析程序位于串口可读信号对应的槽中，也就是当串口可读时，会自动调用。
-
+日志界面的串口读取流程图如\auotref 所示,当用户打开串口后，主窗口中的串口读取函数会对串口中的数据进行非堵塞地读取，并按协议格式进行解析、显示和存盘。对于非协议格式的数据，则按照普通标准输出重定向过来的数据进行显示。此时在日志信息显示框中只会将信息显示在详细内容部分，日志级别、进程号、文件名、行号等内容均为空白。对于按照协议格式发送的信息，会按照信息的级别以不同的底色进行显示。
+\begin{figure}[!h]
+\centering
+\includegraphics[width=.6\textwidth]{./graphics/routonTTYRead.pdf}
+\caption{日志界面串口读取流程图}\label{fig:串口读取流程图}
+\end{figure}
 

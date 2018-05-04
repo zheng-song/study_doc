@@ -1,0 +1,54 @@
+\begin{thebibliography}{10}
+
+\bibitem{Wind2003VxWorks}
+River W.
+\newblock VxWorks程序员指南.
+\newblock 清华大学出版社, 2003.
+
+\bibitem{WindowsEmbeddedCE6.0}
+百度百科.
+\newblock Windows Embedded CE6.0.
+\newblock Website, 2010.
+\newblock
+  \url{https://baike.baidu.com/item/Windows\%20Embedded\%20CE6.0\/6027594}.
+
+\bibitem{嵌入式实时操作系统VxWorks及其开发环境Tornado}
+孔祥营.
+\newblock 嵌入式实时操作系统VxWorks及其开发环境Tornado.
+\newblock 中国电力出版社, 2002.
+
+\bibitem{Black1992Microkernel}
+Black D~L.
+\newblock Microkernel Operating System Architecture and Mach.
+\newblock in: Proceedings of Proc. of the Workshop on Micro-Kernels and Other
+  Kernel Architectures, 1992.
+
+\bibitem{BSP开发人员指南}
+〔美〕WindRiver.
+\newblock VxWorks BSP开发人员指南（VxWorks开发人员指南丛书）.
+\newblock 清华大学出版社, 2004.
+
+\bibitem{USB总线接口开发指南}
+张念淮.
+\newblock USB总线接口开发指南.
+\newblock 国防工业出版社, 2001.
+
+\bibitem{USB大全}
+Axelson，陈逸 J.
+\newblock USB大全.
+\newblock 中国电力出版社, 2001.
+
+\bibitem{USB开发手册}
+USB开发手册.
+\newblock 中国铁道出版社, 2014.
+
+\bibitem{圈圈教你玩USB}
+刘荣.
+\newblock 圈圈教你玩USB.
+\newblock 北京航空航天大学出版社, 2009.
+
+\bibitem{CP2102}
+Labs S.
+\newblock CP2102 SINGLE-CHIP USB to UART BRIDGE, 2007.
+
+\end{thebibliography}
