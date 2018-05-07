@@ -316,6 +316,25 @@ $$
 
 
 
+
+
+
+
+### latex处理参考文献
+
+
+
+latex通常使用bibtex数据库来处理参考文献，在引用bibtex中的参考文献时，编译过程中会自动的对其进行编号。但是对于没有被引用的参考文献，不会在文件中显示出来，此时我们需要在
+
+```latex
+\nocite{*} %加上这一个语句就可以显示未被引用的参考文献
+\bibliography{ref/myref.bib}
+```
+
+
+
+
+
 ### 几个Latex网站推荐
 
 - [Detexify LaTeX handwritten symbol recognition](http://detexify.kirelabs.org/classify.html).：通过手写识别LaTeX符号，识别率很高，尤其是当看到一个符号却不知道其LaTeX命令的时候它很有用。只要画出记忆中符号的样子，就会自动出现各种可能想要的表示方法。
