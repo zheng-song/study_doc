@@ -77,7 +77,7 @@ int ResetStdOut(int usb_serial)
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=0.7\textwidth]{./graphics/rtp-printf-reset.pdf}
+\includegraphics[width=0.7\textwidth]{./graphics/RTP-STDOUT-RESET.pdf}
 \caption{RTP模式下标准输出重定向流程图}\label{fig:rtp-printf-reset}
 \end{figure}
 
@@ -113,7 +113,7 @@ int ResetStdOut(int usb_serial)
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=0.7\textwidth]{./graphics/task-printf-reset.pdf}
+\includegraphics[width=0.7\textwidth]{./graphics/TASK-STDOUT-RESET.pdf}
 \caption{task模式下标准输出重定向流程图}\label{fig:task-printf-reset}
 \end{figure}
 
@@ -206,10 +206,10 @@ usb\_ logWrite()函数的实现在RTP模式和task模式之下是一样的，在
 \caption{主机端日志分析工具界面}\label{fig:RoutonLog}
 \end{figure}\\
 \textbf{串口读取流程}
-日志界面的串口读取流程图如\auotref 所示,当用户打开串口后，主窗口中的串口读取函数会对串口中的数据进行非堵塞地读取，并按协议格式进行解析、显示和存盘。对于非协议格式的数据，则按照普通标准输出重定向过来的数据进行显示。此时在日志信息显示框中只会将信息显示在详细内容部分，日志级别、进程号、文件名、行号等内容均为空白。对于按照协议格式发送的信息，会按照信息的级别以不同的底色进行显示。
+日志界面的串口读取流程图如\auotref{串口读取流程图} 所示,当用户打开串口后，主窗口中的串口读取函数会对串口中的数据进行非堵塞地读取，并按协议格式进行解析、显示和存盘。对于非协议格式的数据，则按照普通标准输出重定向过来的数据进行显示。此时在日志信息显示框中只会将信息显示在详细内容部分，日志级别、进程号、文件名、行号等内容均为空白。对于按照协议格式发送的信息，会按照信息的级别以不同的底色进行显示。
 \begin{figure}[!h]
 \centering
-\includegraphics[width=.6\textwidth]{./graphics/routonTTYRead.pdf}
+\includegraphics[width=.6\textwidth]{./graphics/LogTTYRead.pdf}
 \caption{日志界面串口读取流程图}\label{fig:串口读取流程图}
 \end{figure}
 

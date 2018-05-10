@@ -180,7 +180,7 @@
 \RequirePackage{geometry}
 \geometry{
 %  top=1.77in,
-  top=0.8in,
+  top=1.0in,
   bottom=0.8in,
   left=1.1in,
   right=1.1in,
@@ -194,7 +194,9 @@
   \pageheight=\paperheight
 }
 \RequirePackage{indentfirst}
+% 设置段首的段落缩进为2
 \setlength{\parindent}{2em}
+% 设置两段之间的间距
 \setlength{\parskip}{0pt plus 2pt minus 1pt}
 \RequirePackage{color}
 \RequirePackage[table]{xcolor}
@@ -629,11 +631,20 @@
   breaklines=true
 }
 \setcounter{secnumdepth}{3}
+
+% \titleformat{\chapter}[hang]{\centering\LARGE\bfseries}{\chaptername}{1em}{}
+% 其中\chapter可以换为\section, \subsection等，设置节、小节等标题的格式。
+% hang表示标题头与标题内容在同一行，是默认值。而book类默认的章标题是标题 头与标题内容放在两个段落，对应于
+% display选项。此外还有block, runin, leftmargin, rightmargin, frame, wrap等选项，一般不大用到。
+% \centering\LARGE\bfseries这一块是设置标题的排版格式，这里设置为居中、 \LARGE尺寸和黑体。
+% 后面紧跟的是标题头的定义。book类里的标题头是英文，需要改成中文。如果希 望改成"第一章"这样的格式，则应先引用
+% CJKnumb宏包，它提供了把阿拉伯数字转 换成中文数字的命令。然后定义
 \titleformat{\chapter}
   {
-    \bfseries
+    \bfseries % bfseries和textbf一样是给字体加黑的
     \HEI
     \centering
+    % footsize{字体大小}{行间距} 此处相当于设置了小二字号
     \fontsize{18pt}{23.4pt}\selectfont
   }
   {
@@ -641,16 +652,21 @@
     {\zhnumber{\thechapter}}
     {Chapter~\thechapter}
   }
-  {1em}
+  {1em} %此处定义的是标题头和标题内容之间的距离，这里是1em，相当于一个汉字的宽度。
   {}
+% 最后用\titlespacing或\titlespacing*命令设置标题与四周的距离，分别为 左边距、上边距、下边距
 \titlespacing*{\chapter}{0pt}{0pt}{20pt}
+
 \titleformat*{\section}{\bfseries\HEI\fontsize{16pt}{20.8pt}\selectfont}
 \titlespacing*{\section}{0pt}{18pt}{6pt}
+
 \titleformat*{\subsection}{\bfseries\HEI\fontsize{14pt}{18.2pt}\selectfont}
 \titlespacing*{\subsection}{0pt}{12pt}{6pt}
+
 \titleformat*{\subsubsection}{\bfseries\HEI\fontsize{13pt}{16.9pt}\selectfont}
 \titlespacing*{\subsubsection}{0pt}{12pt}{6pt}
-\setcounter{tocdepth}{1}
+
+\setcounter{tocdepth}{1} % 用来编号章节序号始，此处表示从一开始
 \contentsmargin{2.0em}
 \newskip\HUST@oldcftbeforechapskip
 \HUST@oldcftbeforechapskip=\cftbeforechapskip
