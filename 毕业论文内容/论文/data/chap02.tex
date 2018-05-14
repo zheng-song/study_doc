@@ -28,9 +28,8 @@
 \end{enumerate}
 
 \subsubsection{VxWorks I/O 系统}
-	通常为了实现与应用程序的平台无关性，操作系统都会为应用程序提供一套标准的接口，VxWorks也不例外，这样就可以通过调整底层驱动或者是接近驱动那部分的操作系统中间层来提高应用层开发的效率，避免重复编码。在我们的通用操作系统(如Mac OS、Linux、Windows)当中，通常会将这套应用层的接口标准从操作系统中独立出来，专门以标准库的形式存在，这样可以屏蔽操作系统之间的差异，增强应用程序的平台无关性。
-	
-	VxWorks中为应用层提供了一套标准的文件操作接口，实际上与GPOS提供接口类似，我们将其称作为标准I/O 库，VxWorks下由ioLib.c文件提供。ioLib.c文件提供如下标准接口函数：creat()、open()、unlink()、remove()、close()、rename()、read()、write()、ioctl()、lseek()、readv()、writev()等\cite{BSP开发人员指南}，VxWorks与通用操作系统有很大的一个不同点是：VxWorks不区分用户态和内核态，用户层可以直接对内核函数进行调用，而无需使用陷阱指令之类的机制，以及存在使用权限上的限制。因此VxWorks提供给应用层的接口无需通过外围库的方式，而是直接以内核文件的形式提供。对于一般的设备而言，remove()接口是不需要实现的，\autoref{tab:IO接口函数表} 是七个驱动程序接口函数的简单描述。
+	通常操作系统为了平台的无关性都会为应用程序提供一套标准的接口，VxWorks也不例外，它为应用层的提供了接口函数creat()、open()、unlink()、remove()、close()、rename()、read()、write()、ioctl()、lseek()、readv()、writev()等，我们将其称作为标准I/O 库\cite{BSP开发人员指南}\cite{曹桂平2011VxWorks}。
+	这样就可以通过调整底层驱动或者是接近驱动那部分的操作系统中间层来实现应用程序的通用性，提高应用层的开发效率，避免重复编码。通用操作系统(如Mac OS、Linux、Windows)中，通常会把这套接口从操作系统中独立出来，以标准库的形式存在，但是在VxWorks中它们是由系统的内核实现的，都位于ioLib.c文件下。VxWorks与通用操作系统有很大的一个不同点是：VxWorks不区分用户态和内核态，用户层可以直接对内核函数进行调用，而无需使用陷阱指令之类的机制，以及存在使用权限上的限制。因此VxWorks提供给应用层的接口无需通过外围库的方式，而是直接以内核文件的形式提供\cite{曹桂平2011VxWorks}。对于一般的设备而言，remove()接口是不需要实现的，\autoref{tab:IO接口函数表} 是七个驱动程序接口函数的简单描述。
 
 \begin{table}[!h]
 \centering
@@ -57,7 +56,7 @@
 \end{table}
 	
 \subsubsection{系统设备表}
-	系统设备表是VxWorks中为了管理系统上的所有设备而使用的一个链表。系统设备表在系统中的连接方式如\autoref{fig:VxWorks系统设备示意图}所示。内核要求每一个设备都必须使用一个DEV\_ HDR的结构来表示这个设备，其定义如下：
+	系统设备表是VxWorks中为了管理系统上的所有设备而使用的一个链表。系统设备表在系统中的连接方式如\autoref{fig:VxWorks系统设备示意图}所示。wind内核规定每一个设备都必须使用一个DEV\_ HDR的结构来表示该设备，其定义如下：
 \lstset{language=C}
 \begin{lstlisting}
 /*h/iosLib.h*/
@@ -68,7 +67,7 @@ typedef struct /*DEV_HDR - device header for all device structures*/
   char * name;/* device name */ 
 }DEV_HDR;  
 \end{lstlisting}
-VxWorks系统提供了一个设备的注册函数iosDevAdd( DEV\_ HDR *pDevHdr, char *name, int drvnum)来将设备添加到系统设备表当中，系统设备表在添加设备时就会增加一个节点，它为open()、close()、remove()这三个函数提供文件与设备的连接，当应用程序执行这三个函数中的一个时，IO系统会将文件名和设备链表中的进行匹配，匹配成功之后就使用这个设备驱动进行文件的其他操作。
+VxWorks系统提供了一个设备的注册函数iosDevAdd( DEV\_ HDR *pDevHdr, char *name, int drvnum)来将设备添加到系统设备表当中，系统设备表在每次添加设备时就会增加一个节点，删除设备时就会减少一个节点，它会为open()、close()、remove()这三个函数提供文件与设备的连接，当应用程序执行这三个函数中的一个时，IO系统会通过文件名对设备链表中的项进行匹配，匹配的方式是最佳匹配，匹配成功之后就使用这个设备驱动进行其他的文件操作。
 
 
 \begin{figure}[!h]
@@ -78,7 +77,7 @@ VxWorks系统提供了一个设备的注册函数iosDevAdd( DEV\_ HDR *pDevHdr, 
 \end{figure}
 
 \subsubsection{系统驱动表}	
-	I/O子系统维护的系统驱动表包含有当前注册到I/O子系统下的所有驱动。这些驱动可以是直接驱动硬件工作的驱动层，如一般的字符驱动，也可以是驱动中间层，如文件系统中间层，TTY 中间层，USB IO 中间层等。对于中间层驱动，下层硬件驱动将由这些中间层自身负责管理，而不再通过 IO 子系统。如串口底层驱动将通过 TTY 中间层进行管理，而不再通过IO子系统。
+	系统驱动表用于管理当前注册到I/O子系统下的所有驱动，这些驱动可以是直接驱动硬件工作的驱动层，如一般的字符驱动，也可以是驱动中间层，如文件系统中间层，TTY 中间层，USB IO 中间层等。对于中间层驱动，下层硬件驱动将由这些中间层自身负责管理，而不再通过 IO 子系统。如串口底层驱动将通过 TTY 中间层进行管理，而不再通过IO子系统\cite{曹桂平2011VxWorks}\cite{罗国庆2003VxWorks}。
 	
 	系统驱动表底层的实现是一个数组，其中的每一个表项都是一个 DRV\_ ENTRY 类型的结构，该结构定义在 h/private/iosLibP.h文件当中，其定义如下：
 \lstset{language=C}
@@ -95,11 +94,11 @@ typedef struct /* DRV_ENTRY - entries in driver jump table */
   BOOL de_inuse; 
 } DRV_ENTRY; 
 \end{lstlisting}
-DEV\_ ENTRY结构体实际上就是一个函数指针结构，结构中每个成员都指向一个完成特定功能的函数，这些函数与用户层提供标准函数接口一一对应。成员 de\_ inuse 用以表示一个表项是否空闲。这个结构体中的函数指针实际指向的内容由驱动调用iosDrvInstall( FUNCPTR pCreate,FUNCPTR pDelete,FUNCPTR pOpen,FUNCPTR pClose,FUNCPTR pRead,FUNCPTR pWrite,FUNCPTR pIoctl)来提供。 
+DEV\_ ENTRY结构体实际上就是一个函数指针结构，结构中每个成员都指向一个完成特定功能的函数，这些函数与用户层提供标准函数接口一一对应\cite{VxWorksDriverAPI}\cite{Wind2003VxWorks}。成员 de\_ inuse 用以表示一个表项是否空闲。这个结构体中的函数指针实际指向的内容由驱动调用iosDrvInstall( FUNCPTR pCreate,FUNCPTR pDelete,FUNCPTR pOpen,FUNCPTR pClose,FUNCPTR pRead,FUNCPTR pWrite,FUNCPTR pIoctl)来提供。 
 
 
 \subsubsection{系统文件描述符表}
-	系统描述符表用于存储系统中打开的所有文件的描述符。其底层实现也是一个数组，文件描述符表的表项索引被用作文件描述符的ID(即open()函数返回值)。对于文件描述符有一点需要注意：标准输入，标准输出，标准错误输出虽然使用 0，1，2 三个文件描述符，但是可能在系统文件描述附表中只占用一个表项，即都使用同一个表项。Vxworks 内核将 0，1，2 三个标准文件描述符与系统文件描述符表中内容分开进行管理。实际上系统文件描述符中的内容更多的是针对硬件设备，即使用一次 open 函数调用就占用一个表项。0，1，2 三个标准文件描述符虽然占用 ID 空间（即其他描述符此时只能从 3 开始分配），但是其只使用了一次 open 函数调用，此后使用 ioGlobalStdSet 函数对 open 返回值进行了复制。
+	系统描述符表用于管理当前系统打开的所有文件描述符。其底层实现也是一个数组，文件描述符表的表项索引被用作文件描述符的ID(即open()函数返回值)。对于文件描述符有一点需要注意：标准输入，标准输出，标准错误输出虽然使用 0，1，2 三个文件描述符，但是可能在系统文件描述附表中只占用一个表项，即都使用同一个表项\cite{基于VxWorks的嵌入式实时系统设计}\cite{曹桂平2011VxWorks}。Vxworks 内核将 0，1，2 三个标准文件描述符与系统文件描述符表中内容分开进行管理。实际上系统文件描述符中的内容更多的是针对硬件设备，即使用一次 open 函数调用就占用一个表项。0，1，2 三个标准文件描述符虽然占用 ID 空间（即其他描述符此时只能从 3 开始分配），但是其只使用了一次 open 函数调用，此后使用 ioGlobalStdSet 函数对 open 返回值进行了复制\cite{嵌入式实时操作系统VxWorks及其开发环境Tornado}\cite{史小斌2003VxWorks}\cite{曹桂平2011VxWorks}。
 
 系统文件描述符表中每个表项都是一个 FD\_ ENTRY 类型的结构，该结构定义在h/private/iosLibP.h 中，如下所示。
 \lstset{language=C}

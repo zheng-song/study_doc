@@ -11,61 +11,67 @@ A level-1 auxiliary file: data/chap06.aux
 Database file #1: ref/myref.bib.bib
 Warning--I didn't find a database entry for "WindowsEmbeddedCE6.0"
 Warning--I didn't find a database entry for "USB开发手册"
-Warning--I didn't find a database entry for "何源2006USB"
+Warning--there's a number but no volume in VxWorks嵌入式实时操作系统的结构研究
+Warning--there's a school but no address in 徐媛媛2003嵌入式实时操作系统的设备驱动
+Warning--there's a publisher but no address in 嵌入式实时操作系统VxWorks及其开发环境Tornado
+Warning--there's a publisher but no address in Tronado
+Warning--there's a publisher but no address in TronadoBSP
 Warning--there's a publisher but no address in BSP开发人员指南
+Warning--there's a publisher but no address in 曹桂平2011VxWorks
+Warning--there's a publisher but no address in 罗国庆2003VxWorks
+Warning--there's a publisher but no address in VxWorksDriverAPI
+Warning--there's a publisher but no address in Wind2003VxWorks
+Warning--there's a publisher but no address in 基于VxWorks的嵌入式实时系统设计
+Warning--there's a number but no volume in 史小斌2003VxWorks
 Warning--there's a publisher but no address in USB总线接口开发指南
 Warning--there's a publisher but no address in USB大全
 Warning--there's a publisher but no address in 圈圈教你玩USB
-Warning--there's a school but no address in 徐媛媛2003嵌入式实时操作系统的设备驱动
 Warning--empty booktitle in Renard20081003
 Warning--there's a number but no volume in 肖竟华2003嵌入式实时操作系统
-Warning--there's a number but no volume in VxWorks嵌入式实时操作系统的结构研究
 Warning--empty journal in 串口调试
-Warning--there's a publisher but no address in Wind2003VxWorks
 Warning--there's a publisher but no address in USBdeveloperkitProgrammerGuide
-Warning--there's a publisher but no address in 基于VxWorks的嵌入式实时系统设计
-Warning--there's a publisher but no address in 嵌入式实时操作系统VxWorks及其开发环境Tornado
 Warning--there's a publisher but no address in VxWorks网络程序员指南
 Warning--there's a publisher but no address in USB2.0硬件设计
-You've used 18 entries,
+Warning--there's a publisher but no address in 李肇庆2004串行端口技术
+You've used 30 entries,
             2464 wiz_defined-function locations,
-            630 strings with 5895 characters,
-and the built_in function-call counts, 3275 in all, are:
-= -- 295
-> -- 119
+            691 strings with 7454 characters,
+and the built_in function-call counts, 5513 in all, are:
+= -- 496
+> -- 222
 < -- 0
-+ -- 56
-- -- 28
-* -- 141
-:= -- 508
-add.period$ -- 54
-call.type$ -- 18
++ -- 104
+- -- 52
+* -- 244
+:= -- 853
+add.period$ -- 90
+call.type$ -- 30
 change.case$ -- 0
 chr.to.int$ -- 0
-cite$ -- 33
-duplicate$ -- 176
-empty$ -- 367
-format.name$ -- 35
-if$ -- 764
+cite$ -- 52
+duplicate$ -- 273
+empty$ -- 606
+format.name$ -- 66
+if$ -- 1293
 int.to.chr$ -- 0
-int.to.str$ -- 18
-missing$ -- 26
-newline$ -- 92
-num.names$ -- 18
-pop$ -- 89
+int.to.str$ -- 30
+missing$ -- 44
+newline$ -- 152
+num.names$ -- 30
+pop$ -- 150
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 55
+skip$ -- 97
 stack$ -- 0
-substring$ -- 141
-swap$ -- 2
+substring$ -- 225
+swap$ -- 4
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
-warning$ -- 15
-while$ -- 22
-width$ -- 20
-write$ -- 182
-(There were 18 warnings)
+warning$ -- 22
+while$ -- 38
+width$ -- 32
+write$ -- 307
+(There were 24 warnings)

@@ -1,9 +1,64 @@
 \begin{thebibliography}{10}
 
+\bibitem{VxWorks嵌入式实时操作系统的结构研究}
+马超, 尹长青.
+\newblock VxWorks嵌入式实时操作系统的结构研究.
+\newblock 电脑知识与技术:学术交流, 2006, (1):133--134.
+
+\bibitem{徐媛媛2003嵌入式实时操作系统的设备驱动}
+徐媛媛.
+\newblock 嵌入式实时操作系统的设备驱动: [PhD Dissertation].
+\newblock 华中科技大学, 2003.
+
+\bibitem{嵌入式实时操作系统VxWorks及其开发环境Tornado}
+孔祥营.
+\newblock 嵌入式实时操作系统VxWorks及其开发环境Tornado.
+\newblock 中国电力出版社, 2002.
+
+\bibitem{Tronado}
+System W~R.
+\newblock Tronado Device Driver Workshop.
+\newblock Inc, 1999.
+
+\bibitem{TronadoBSP}
+System W~R.
+\newblock Tronado BSP Training Workshop.
+\newblock Inc, 1999.
+
 \bibitem{BSP开发人员指南}
 System W~R.
 \newblock VxWorks BSP Developer Guide.
 \newblock Inc, 2004.
+
+\bibitem{曹桂平2011VxWorks}
+曹桂平.
+\newblock VxWorks设备驱动开发详解.
+\newblock 电子工业出版社, 2011.
+
+\bibitem{罗国庆2003VxWorks}
+罗国庆.
+\newblock VxWorks与嵌入式软件开发.
+\newblock 机械工业出版社, 2003.
+
+\bibitem{VxWorksDriverAPI}
+System W~R.
+\newblock VxWorks Driver API Reference 5.5.
+\newblock Inc, 2002.
+
+\bibitem{Wind2003VxWorks}
+System W~R.
+\newblock VxWorks Programmer Guide.
+\newblock Inc, 2003.
+
+\bibitem{基于VxWorks的嵌入式实时系统设计}
+王金刚.
+\newblock 基于VxWorks的嵌入式实时系统设计.
+\newblock 清华大学出版社, 2004.
+
+\bibitem{史小斌2003VxWorks}
+史小斌, 孙献璞, 张艳玲.
+\newblock VxWorks串行设备驱动模式及其实现.
+\newblock 现代电子技术, 2003, (10):72--74.
 
 \bibitem{USB总线接口开发指南}
 张念淮，江浩.
@@ -20,11 +75,6 @@ Axelson，陈逸 J.
 \newblock 圈圈教你玩USB.
 \newblock 北京航空航天大学出版社, 2009.
 
-\bibitem{徐媛媛2003嵌入式实时操作系统的设备驱动}
-徐媛媛.
-\newblock 嵌入式实时操作系统的设备驱动: [PhD Dissertation].
-\newblock 华中科技大学, 2003.
-
 \bibitem{USB与RS232接口转换器的设计}
 何源, 顾金良.
 \newblock USB与RS232接口转换器的设计.
@@ -40,20 +90,40 @@ Renard K~G, Nichols M~H, Woolhiser D~A, et~al.
   Operating System Interface (POSIX) Base Specifications, Issue 7.
 \newblock 2008, c1-3826.
 
+\bibitem{Wu2008Implementation}
+Wu Y, Wang C, Cai J.
+\newblock Implementation of IPTV STB Network Driver and Protocol for VxWorks
+  Embedded System.
+\newblock in: Proceedings of International Symposium on Test Automation &
+  Instrumentation, 2008.
+
+\bibitem{Zhang2010Design}
+Zhang Z, Li Y, Zhang Z.
+\newblock Design and implementation of control system software based on VxWorks
+  multi-tasks.
+\newblock in: Proceedings of International Conference on Advanced Computer
+  Theory and Engineering, 2010, V2-285 - V2-288.
+
+\bibitem{Yi2006Implementation}
+Yi-Hua F~U, Mei S~L.
+\newblock Implementation of 100Mbps Ethernet based on VxWorks in embedded
+  system.
+\newblock Journal of Computer Applications, 2006, 26(9):2190--2191.
+
 \bibitem{肖竟华2003嵌入式实时操作系统}
 肖竟华, 邱奕敏.
 \newblock 嵌入式实时操作系统VxWorks设备驱动程序设计与实现.
 \newblock 电脑与信息技术, 2003, (5):28--30.
 
+\bibitem{李立志2003实时操作系统}
+李立志, 张朝阳, 陈文正.
+\newblock 实时操作系统VxWorks设备驱动程序的编写.
+\newblock 计算机工程, 2003, 29(4):182--184.
+
 \bibitem{aSurveyOfRTOS}
 Ghosh K, Mukherjee B, Schwan K.
 \newblock A Survey of Real-Time Operating Systems -- Draft.
 \newblock Georgia Institute of Technology, 1993.
-
-\bibitem{VxWorks嵌入式实时操作系统的结构研究}
-马超, 尹长青.
-\newblock VxWorks嵌入式实时操作系统的结构研究.
-\newblock 电脑知识与技术:学术交流, 2006, (1):133--134.
 
 \bibitem{串口调试}
 晋成凤, 晋成龙.
@@ -61,34 +131,30 @@ Ghosh K, Mukherjee B, Schwan K.
   基于虚拟串口和串口调试工具的串口编程调试系统设计.
 \newblock 2010.
 
-\bibitem{Wind2003VxWorks}
-System W~R.
-\newblock VxWorks Programmer Guide.
-\newblock Inc, 2003.
+\bibitem{XU2006Design}
+Meirong X, Ming C, Jinxiang D.
+\newblock Design and Implementation of CAN Driver Based on Real-Time Operation
+  System VxWorks.
+\newblock Computer Application and Rearch, 2006, 23(5):185--188.
 
 \bibitem{USBdeveloperkitProgrammerGuide}
-River W.
+System W~R.
 \newblock USB Developer's Kit Programmer's Guide 1.1.2.
 \newblock Inc, 2003.
 
-\bibitem{基于VxWorks的嵌入式实时系统设计}
-王金刚.
-\newblock 基于VxWorks的嵌入式实时系统设计.
-\newblock 清华大学出版社, 2004.
-
-\bibitem{嵌入式实时操作系统VxWorks及其开发环境Tornado}
-孔祥营.
-\newblock 嵌入式实时操作系统VxWorks及其开发环境Tornado.
-\newblock 中国电力出版社, 2002.
-
 \bibitem{VxWorks网络程序员指南}
-王金刚.
-\newblock VxWorks网络程序员指南.
-\newblock 清华大学出版社, 2003.
+System W~R.
+\newblock VxWorks Network Programmer's Guide 5.4.
+\newblock Inc, 2003.
 
 \bibitem{USB2.0硬件设计}
 萧世文, 宋延清.
 \newblock USB 2.0硬件设计.
 \newblock 清华大学出版社, 2006.
+
+\bibitem{李肇庆2004串行端口技术}
+李肇庆, 韩涛.
+\newblock 串行端口技术.
+\newblock 国防工业出版社, 2004.
 
 \end{thebibliography}
