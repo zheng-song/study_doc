@@ -1,7 +1,28 @@
 \chapter{应用层程序接口封装}
 	从VxWorks6.x开始引入了RTP(VxWorks Real Time Process Project)模式，这种模式的优点是应用程序之间互相独立、互不影响，而且增加了内核的稳定性，缺点是由于“内核态”与“用户态”的内存拷贝，其执行效率有所降低，随着CPU速度越来越快，这点效率的牺牲已经越来越不重要。相比较于传统的DKM（downloadable kernel module project），RTP适合多个团队独立运作，然后汇总联试，这种模式除了全局函数不能在shell里直接调用外，其对应用程序几乎不做任何约束，原有的DKM工程代码稍作修改即可正常运行。内核变化较大，需要添加较多的组件，内存需要较好的划分，为保持应用程序直接调用函数调试的习惯，需要封装接口供用户使用。
 
+\section{应用层接口模块设计}
+
+	应用层的接口包括两个部分：一是标准输出重定向接口的设计，目的是在程序运行期间直接调用标准输出函数时就能够将输出信息通过我们的串口输出出去，但是这个标准输出输出的信息不是格式化的信息。二是Log接口函数，通过调用这个接口函数可以将调试信息格式化输出，输出信息会自动包括调试的级别、产生的时间、所处的文件、行号等信息，便于对调试信息进行分析。
+
+主要的模块包块以下两个：
+\begin{itemize}
+\item \hei{ResetStdOut():} 提供给用户选择是否需要重定向标准输出，若参数为1则将标准输出进行重定向，若参数为0，则关闭标准输出重定向，恢复到之前的标准输出。
+
+\item \hei{Log接口函数：} 提供封装的不同级别的Log调试接口，包括LogE(表示错误信息)、LogD(表示详情信息)、LogW(表示警告信息)、LogI(表示)
+\end{itemize}
+
+由于从VxWorks6.x开始引入了RTP(VxWorks Real Time Process Project)模式，这种模式的优点是应用程序之间互相独立、互不影响，而且增加了内核的稳定性，缺点是由于“内核态”与“用户态”的内存拷贝，其执行效率有所降低，随着CPU速度越来越快，这点效率的牺牲已经越来越不重要。在这种RTP模式下对于我们的标准输出重定向接口而言，其实现方式与task模式下存在一些差别，在task模式下我们需要使用VxWorks封装好的ioTaskStdSet()函数来实现重定向，而在RTP模式下我们无法使用，只能寻找其他的解决办法，在此处我们使用的是dup2()/dup()来实现。
+
+
 \section{Log协议的设计}
+
+对于Log接口函数我们设计为其为设计了专用的输出协议，如\autoref{fig:Log协议字段} 所示，在协议中包含了五种不同的输出级别，分别用LogE(表示错误信息)、LogD(表示调试信息)、LogW(表示警告信息)、LogI(表示详情信息)、Logo(表示其他信息)。同时我们还在协议中包含了一些调试信息所需要的关键信息字段，包括任务ID字段、任务名字段、文件名字段、行号字段、时间字段。
+\begin{figure}[!h]
+\centering
+\includegraphics[width=.9\textwidth]{./graphics/Logxieyi.pdf}
+\caption{Log协议字段}\label{fig:Log协议字段}
+\end{figure}
 
 我们为调试信息制定的协议格式为：\backslash 03\backslash 03<L=日志级别;PN=任务ID;P=任务名;F=文件名;N=行号;T=时间>contents\backslash 04\backslash 04\\
 其中各部分的含义如下：
@@ -43,7 +64,7 @@
 \end{itemize}\\
 
 
-\section{标准输出重定向接口的设计}
+\section{标准输出重定向接口的实现}
 	由于标准输出的重定向无法在RTP模式和task模式下使用同一种方法来实现，于是我们使用了两种方法来分别实现RTP模式和task模式下的标准输出重定向。
 \subsection{RTP模式下标准输出重定向}
 	RTP模式下的标准输出重定向流程如\autoref{fig:rtp-printf-reset}所示。部分关键代码如下：
@@ -125,7 +146,7 @@ void ioTaskStdSet(int taskId, int stdFd, int newFd);
 在VxWorks中每一个任务都有一个数组taskStd，用于表明这个任务的标准输入、标准输出、标准错误，函数ioTaskStdSet()的功能就是将特定任务的标准描述符重定向到newFd，newFd需要是一个文件或者设备的描述符。第一个参数taskId表示需要进行重定向的任务的ID(ID为0表示该任务本身)，第二个参数是需要被重定向的某个标准描述符(0,1,2),第三个参数是需要重定向到的文件描述符。该函数没有返回值。
 
 
-\section{Log接口的设计}
+\section{Log接口的实现}
 	Log接口函数用于完成标准格式的log的输出，使用时只需要调用LogE()、LogW()、LogI()、LogD()、LogO()，这几个接口均为宏定义，定义在usb\_ logWrite.h当中，在使用时需要包含该头文件，作用是获取log协议所需要的部分信息，其代码如下所示：
 \lstset{language=C}
 \begin{lstlisting}
@@ -194,17 +215,13 @@ usb\_ logWrite()函数的实现在RTP模式和task模式之下是一样的，在
 
 \section{Windows下的日志分析工具}
 	
-	由于日志分析工具并不是我们本次论文的介绍重点，此处我们只介绍调试信息的接收部分协议的解析相关的内容，对于其他的部分不做详细介绍；日志分析工具为Windows下使用QT开发的界面程序，其结构如\autoref{fig:日志分析工具结构图}所示，主界面如\autoref{fig:RoutonLog} 所示。
+	由于日志分析工具并不是我们本次论文的介绍重点，此处我们只介绍调试信息的接收部分协议的解析相关的内容，对于其他的部分不做详细介绍；日志分析工具为Windows下使用QT开发的界面程序，其结构如\autoref{fig:日志分析工具结构图}所示。
 \begin{figure}[!h]
 \centering
 \includegraphics[width=1.0\textwidth]{./graphics/routonLog-system-structure.pdf}
 \caption{日志分析工具结构图}\label{fig:日志分析工具结构图}
 \end{figure}
-\begin{figure}[!h]
-\centering
-\includegraphics[width=1.0\textwidth]{./graphics/routonLogNoRun.pdf}
-\caption{主机端日志分析工具界面}\label{fig:RoutonLog}
-\end{figure}\\
+
 \textbf{串口读取流程}
 日志界面的串口读取流程图如\auotref{串口读取流程图} 所示,当用户打开串口后，主窗口中的串口读取函数会对串口中的数据进行非堵塞地读取，并按协议格式进行解析、显示和存盘。对于非协议格式的数据，则按照普通标准输出重定向过来的数据进行显示。此时在日志信息显示框中只会将信息显示在详细内容部分，日志级别、进程号、文件名、行号等内容均为空白。对于按照协议格式发送的信息，会按照信息的级别以不同的底色进行显示。
 \begin{figure}[!h]

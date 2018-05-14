@@ -20,7 +20,12 @@ Axelson，陈逸 J.
 \newblock 圈圈教你玩USB.
 \newblock 北京航空航天大学出版社, 2009.
 
-\bibitem{何源2006USB}
+\bibitem{徐媛媛2003嵌入式实时操作系统的设备驱动}
+徐媛媛.
+\newblock 嵌入式实时操作系统的设备驱动: [PhD Dissertation].
+\newblock 华中科技大学, 2003.
+
+\bibitem{USB与RS232接口转换器的设计}
 何源, 顾金良.
 \newblock USB与RS232接口转换器的设计.
 \newblock 指挥控制与仿真, 2006, 28(5):114--117.
@@ -28,11 +33,6 @@ Axelson，陈逸 J.
 \bibitem{CP2102}
 Labs S.
 \newblock CP2102 SINGLE-CHIP USB to UART BRIDGE, 2007.
-
-\bibitem{徐媛媛2003嵌入式实时操作系统的设备驱动}
-徐媛媛.
-\newblock 嵌入式实时操作系统的设备驱动: [PhD Dissertation].
-\newblock 华中科技大学, 2003.
 
 \bibitem{Renard20081003}
 Renard K~G, Nichols M~H, Woolhiser D~A, et~al.
