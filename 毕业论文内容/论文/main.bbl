@@ -1,14 +1,70 @@
 \begin{thebibliography}{10}
 
+\bibitem{张鹏2007基于}
+张鹏.
+\newblock 基于VxWorks的无人直升机操纵控制系统设计与实现:
+  [PhD Dissertation].
+\newblock 南京航空航天大学, 2007.
+
+\bibitem{解月江2004VxWorks设备驱动技术研究}
+解月江, 张梅.
+\newblock VxWorks下设备驱动技术研究.
+\newblock 航天控制, 2004, 22(6):54--57.
+
 \bibitem{VxWorks嵌入式实时操作系统的结构研究}
 马超, 尹长青.
 \newblock VxWorks嵌入式实时操作系统的结构研究.
 \newblock 电脑知识与技术:学术交流, 2006, (1):133--134.
 
+\bibitem{Wu2008Implementation}
+{Wu Yurong}, {Wang Congling}, {Cai Jin}.
+\newblock Implementation of IPTV STB Network Driver and Protocol for VxWorks
+  Embedded System.
+\newblock in: Proceedings of International Symposium on Test Automation &
+  Instrumentation, 2008.
+
+\bibitem{马增炜2011基于}
+马增炜, 马锦儒, 李亚敏.
+\newblock 基于WIFI的智能温室监控系统设计.
+\newblock 农机化研究, 2011, 33(2):154--157.
+
+\bibitem{Zhang2010Design}
+{Zhang Zhen}, {Li Yan}.
+\newblock Design and implementation of control system software based on VxWorks
+  multi-tasks.
+\newblock in: Proceedings of International Conference on Advanced Computer
+  Theory and Engineering, 2010, V2-285 - V2-288.
+
 \bibitem{徐媛媛2003嵌入式实时操作系统的设备驱动}
 徐媛媛.
 \newblock 嵌入式实时操作系统的设备驱动: [PhD Dissertation].
 \newblock 华中科技大学, 2003.
+
+\bibitem{谢强2007基于}
+谢强.
+\newblock 基于LINUX的嵌入式操作系统实时性研究: [PhD
+  Dissertation].
+\newblock 西安电子科技大学, 2007.
+
+\bibitem{郭春生2002硬实时操作系统}
+郭春生, 朱兆达.
+\newblock 硬实时操作系统-RTLinux.
+\newblock 电子技术应用, 2002, 28(4):17--19.
+
+\bibitem{Zhu2004RTLinux}
+{Zhu DyYu}, {Yan Li}, {Qiang Wang}.
+\newblock RTLinux-based software CNC system.
+\newblock Computer Integrated Manufacturing Systems, 2004, 10(12):1571--1576.
+
+\bibitem{李立志2003实时操作系统}
+李立志, 张朝阳, 陈文正.
+\newblock 实时操作系统VxWorks设备驱动程序的编写.
+\newblock 计算机工程, 2003, 29(4):182--184.
+
+\bibitem{陈洋2007VxWorks}
+陈洋, 胡向宇, 杨坚华.
+\newblock VxWorks下的内存管理.
+\newblock 计算机工程, 2007, 33(8):94--96.
 
 \bibitem{嵌入式实时操作系统VxWorks及其开发环境Tornado}
 孔祥营.
@@ -16,24 +72,36 @@
 \newblock 中国电力出版社, 2002.
 
 \bibitem{Tronado}
-System W~R.
+{Wind River System}.
 \newblock Tronado Device Driver Workshop.
 \newblock Inc, 1999.
 
-\bibitem{TronadoBSP}
-System W~R.
-\newblock Tronado BSP Training Workshop.
-\newblock Inc, 1999.
+\bibitem{Yao2009Design}
+{Yao Weiqing}, {Zhou Wei}.
+\newblock Design of USB-RS232 converter module based on FT2232H.
+\newblock Electronic Design Engineering, 2009.
 
-\bibitem{BSP开发人员指南}
-System W~R.
-\newblock VxWorks BSP Developer Guide.
-\newblock Inc, 2004.
+\bibitem{Zhou2002The}
+{Zhou Yiqing}, {Jiangmen}.
+\newblock The Simplest Solution for USB/RS-232 Converter.
+\newblock Journal of Xianning Teachers College, 2002.
 
 \bibitem{曹桂平2011VxWorks}
 曹桂平.
 \newblock VxWorks设备驱动开发详解.
 \newblock 电子工业出版社, 2011.
+
+\bibitem{VxWorks内核解读}
+yz2010的博客.
+\newblock VxWorks内核解读.
+\newblock \url{https://blog.csdn.net/yz2010/article/details/68930013}.
+\newblock Accessed April 17, 2018.
+
+\bibitem{刘小军2008基于}
+刘小军.
+\newblock 基于VxWorks的实时仿真系统软件设计与开发: [PhD
+  Dissertation].
+\newblock 南京航空航天大学, 2008.
 
 \bibitem{罗国庆2003VxWorks}
 罗国庆.
@@ -41,12 +109,12 @@ System W~R.
 \newblock 机械工业出版社, 2003.
 
 \bibitem{VxWorksDriverAPI}
-System W~R.
+{Wind River System}.
 \newblock VxWorks Driver API Reference 5.5.
 \newblock Inc, 2002.
 
 \bibitem{Wind2003VxWorks}
-System W~R.
+{Wind River System}.
 \newblock VxWorks Programmer Guide.
 \newblock Inc, 2003.
 
@@ -55,25 +123,49 @@ System W~R.
 \newblock 基于VxWorks的嵌入式实时系统设计.
 \newblock 清华大学出版社, 2004.
 
-\bibitem{史小斌2003VxWorks}
-史小斌, 孙献璞, 张艳玲.
-\newblock VxWorks串行设备驱动模式及其实现.
-\newblock 现代电子技术, 2003, (10):72--74.
+\bibitem{An2003Implementation}
+{An Junshe}.
+\newblock Implementation of an Embedded System Based on VxWorks.
+\newblock Computer Engineering & Applications, 2003.
+
+\bibitem{胡明民2012基于实时操作系统}
+胡明民.
+\newblock 基于实时操作系统VxWorks的驱动程序开发: [PhD
+  Dissertation].
+\newblock 西安电子科技大学, 2012.
+
+\bibitem{冯云贺2014基于}
+冯云贺.
+\newblock
+  基于Simics全系统仿真环境的嵌入式系统的研究与开发: [PhD
+  Dissertation].
+\newblock 北京工业大学, 2014.
+
+\bibitem{李雪红2004USB}
+李雪红.
+\newblock USB/RS232接口转换器的设计: [PhD Dissertation].
+\newblock 长安大学, 2004.
+
+\bibitem{莫宏伟2001USB}
+莫宏伟, 柳泉, 赵文华, et~al.
+\newblock USB传输技术及其应用.
+\newblock 应用科技, 2001, 28(10):20--22.
+
+\bibitem{张杰2008基于}
+张杰.
+\newblock 基于USB主机的USB-RS232接口转换器的设计与实现: [PhD
+  Dissertation].
+\newblock 南京理工大学, 2008.
+
+\bibitem{边海龙2004USB}
+边海龙, 贾少华.
+\newblock USB 2.0设备的设计与开发.
+\newblock 人民邮电出版社, 2004.
 
 \bibitem{USB总线接口开发指南}
-张念淮，江浩.
+张念淮, 江浩.
 \newblock USB总线接口开发指南.
 \newblock 国防工业出版社, 2001.
-
-\bibitem{USB大全}
-Axelson，陈逸 J.
-\newblock USB大全.
-\newblock 中国电力出版社, 2001.
-
-\bibitem{圈圈教你玩USB}
-刘荣.
-\newblock 圈圈教你玩USB.
-\newblock 北京航空航天大学出版社, 2009.
 
 \bibitem{USB与RS232接口转换器的设计}
 何源, 顾金良.
@@ -84,44 +176,55 @@ Axelson，陈逸 J.
 Labs S.
 \newblock CP2102 SINGLE-CHIP USB to UART BRIDGE, 2007.
 
+\bibitem{阳得常2010基于}
+阳得常.
+\newblock 基于Windows XP下USB转RS-232接口转换器驱动程序的开发:
+  [PhD Dissertation].
+\newblock 西安电子科技大学, 2010.
+
 \bibitem{Renard20081003}
-Renard K~G, Nichols M~H, Woolhiser D~A, et~al.
+{Renard K. G}, {Nichols M. H}, {Woolhiser D.A}, et~al.
 \newblock 1003.1-2008 - IEEE Standard for Information Technology- Portable
   Operating System Interface (POSIX) Base Specifications, Issue 7.
 \newblock 2008, c1-3826.
 
-\bibitem{Wu2008Implementation}
-Wu Y, Wang C, Cai J.
-\newblock Implementation of IPTV STB Network Driver and Protocol for VxWorks
-  Embedded System.
-\newblock in: Proceedings of International Symposium on Test Automation &
-  Instrumentation, 2008.
+\bibitem{Barbalace2007Performance}
+{Barbalace A.}, {Luchetta A.}, {Manduchi G.}
+\newblock Performance Comparison of VxWorks, Linux, RTAI and Xenomai in a Hard
+  Real-time Application.
+\newblock in: Proceedings of Real-Time Conference, 2007 Ieee-Npss, 2007, 1-5.
 
-\bibitem{Zhang2010Design}
-Zhang Z, Li Y, Zhang Z.
-\newblock Design and implementation of control system software based on VxWorks
-  multi-tasks.
-\newblock in: Proceedings of International Conference on Advanced Computer
-  Theory and Engineering, 2010, V2-285 - V2-288.
+\bibitem{Kornecki2000Learning}
+{Kornecki Andrew J.}, {Zalewski Janusz}, {Eyassu Daniel}.
+\newblock Learning Real-Time Programming Concepts through VxWorks Lab
+  Experiments.
+\newblock in: Proceedings of Software Engineering Education & Training, 2000.
+  Proceedings. Conference on, 2000, 294-301.
+
+\bibitem{Neugass1991VxWorks}
+{Neugass H.}, {Espin G.}, {Nunoe H.}
+\newblock VxWorks: an interactive development environment and real-time kernel
+  for Gmicro.
+\newblock Tron Symposium Proc Ghth, 1991, pages 196--207.
 
 \bibitem{Yi2006Implementation}
-Yi-Hua F~U, Mei S~L.
+{Yi-Hua F. U.}, {Mei Shunliang}.
 \newblock Implementation of 100Mbps Ethernet based on VxWorks in embedded
   system.
 \newblock Journal of Computer Applications, 2006, 26(9):2190--2191.
+
+\bibitem{张军2006基于}
+张军.
+\newblock 基于Vxworks实时操作系统的串口通信程序设计与实现.
+\newblock 微计算机信息, 2006, 22(5):98--99.
 
 \bibitem{肖竟华2003嵌入式实时操作系统}
 肖竟华, 邱奕敏.
 \newblock 嵌入式实时操作系统VxWorks设备驱动程序设计与实现.
 \newblock 电脑与信息技术, 2003, (5):28--30.
 
-\bibitem{李立志2003实时操作系统}
-李立志, 张朝阳, 陈文正.
-\newblock 实时操作系统VxWorks设备驱动程序的编写.
-\newblock 计算机工程, 2003, 29(4):182--184.
-
 \bibitem{aSurveyOfRTOS}
-Ghosh K, Mukherjee B, Schwan K.
+{Ghosh Kaushik}, {Mukherjee Bodhisattwa}, {Schwan Karsten}.
 \newblock A Survey of Real-Time Operating Systems -- Draft.
 \newblock Georgia Institute of Technology, 1993.
 
@@ -132,29 +235,85 @@ Ghosh K, Mukherjee B, Schwan K.
 \newblock 2010.
 
 \bibitem{XU2006Design}
-Meirong X, Ming C, Jinxiang D.
+{Xu Meirong}, {Cai Ming}, {Dong Jinxiang}.
 \newblock Design and Implementation of CAN Driver Based on Real-Time Operation
   System VxWorks.
 \newblock Computer Application and Rearch, 2006, 23(5):185--188.
 
+\bibitem{史小斌2003VxWorks}
+史小斌, 孙献璞, 张艳玲.
+\newblock VxWorks串行设备驱动模式及其实现.
+\newblock 现代电子技术, 2003, (10):72--74.
+
+\bibitem{籍林峰2004VxWorks}
+籍林峰, 曹伟.
+\newblock VxWorks操作系统中中断的应用.
+\newblock 雷达与对抗, 2004, (3):67--69.
+
+\bibitem{Barbalace2008Performance}
+{Barbalace A}, {Luchetta A}, {Manduchi G}, et~al.
+\newblock Performance Comparison of VxWorks, Linux, RTAI, and Xenomai in a Hard
+  Real-Time Application.
+\newblock IEEE Transactions on Nuclear Science, 2008, 55(1):435--439.
+
 \bibitem{USBdeveloperkitProgrammerGuide}
-System W~R.
+{Wind River System}.
 \newblock USB Developer's Kit Programmer's Guide 1.1.2.
 \newblock Inc, 2003.
 
+\bibitem{TronadoBSP}
+{Wind River System}.
+\newblock Tronado BSP Training Workshop.
+\newblock Inc, 1999.
+
+\bibitem{BSP开发人员指南}
+{Wind River System}.
+\newblock VxWorks BSP Developer Guide.
+\newblock Inc, 2004.
+
 \bibitem{VxWorks网络程序员指南}
-System W~R.
+{Wind River System}.
 \newblock VxWorks Network Programmer's Guide 5.4.
 \newblock Inc, 2003.
+
+\bibitem{周启平2004VxWorks}
+周启平, 张杨.
+\newblock VxWorks下设备驱动程序及BSP开发指南.
+\newblock 中国电力出版社, 2004.
+
+\bibitem{周启平2005VxWorks}
+周启平, 张杨.
+\newblock VxWorks程序员速查手册.
+\newblock 机械工业出版社, 2005.
+
+\bibitem{USB大全}
+{Jan Axelson}, 陈逸.
+\newblock USB大全.
+\newblock 中国电力出版社, 2001.
 
 \bibitem{USB2.0硬件设计}
 萧世文, 宋延清.
 \newblock USB 2.0硬件设计.
 \newblock 清华大学出版社, 2006.
 
+\bibitem{圈圈教你玩USB}
+刘荣.
+\newblock 圈圈教你玩USB.
+\newblock 北京航空航天大学出版社, 2009.
+
+\bibitem{许永和2002USB}
+许永和.
+\newblock USB外围设备设计与应用.
+\newblock 中国电力出版社, 2002.
+
 \bibitem{李肇庆2004串行端口技术}
 李肇庆, 韩涛.
 \newblock 串行端口技术.
 \newblock 国防工业出版社, 2004.
+
+\bibitem{陈智育2004VxWorks}
+陈智育, 温彦军, 陈琪.
+\newblock VxWorks程序开发实践.
+\newblock 人民邮电出版社, 2004.
 
 \end{thebibliography}

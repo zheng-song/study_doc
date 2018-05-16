@@ -9,69 +9,82 @@ A level-1 auxiliary file: data/chap04.aux
 A level-1 auxiliary file: data/chap05.aux
 A level-1 auxiliary file: data/chap06.aux
 Database file #1: ref/myref.bib.bib
-Warning--I didn't find a database entry for "WindowsEmbeddedCE6.0"
-Warning--I didn't find a database entry for "USB开发手册"
+Warning--I didn't find a database entry for ""
+Warning--there's a school but no address in 张鹏2007基于
 Warning--there's a number but no volume in VxWorks嵌入式实时操作系统的结构研究
 Warning--there's a school but no address in 徐媛媛2003嵌入式实时操作系统的设备驱动
+Warning--there's a school but no address in 谢强2007基于
 Warning--there's a publisher but no address in 嵌入式实时操作系统VxWorks及其开发环境Tornado
 Warning--there's a publisher but no address in Tronado
-Warning--there's a publisher but no address in TronadoBSP
-Warning--there's a publisher but no address in BSP开发人员指南
 Warning--there's a publisher but no address in 曹桂平2011VxWorks
+Warning--there's a school but no address in 刘小军2008基于
 Warning--there's a publisher but no address in 罗国庆2003VxWorks
 Warning--there's a publisher but no address in VxWorksDriverAPI
 Warning--there's a publisher but no address in Wind2003VxWorks
 Warning--there's a publisher but no address in 基于VxWorks的嵌入式实时系统设计
-Warning--there's a number but no volume in 史小斌2003VxWorks
+Warning--there's a school but no address in 胡明民2012基于实时操作系统
+Warning--there's a school but no address in 冯云贺2014基于
+Warning--there's a school but no address in 李雪红2004USB
+Warning--there's a school but no address in 张杰2008基于
+Warning--there's a publisher but no address in 边海龙2004USB
 Warning--there's a publisher but no address in USB总线接口开发指南
-Warning--there's a publisher but no address in USB大全
-Warning--there's a publisher but no address in 圈圈教你玩USB
+Warning--there's a school but no address in 阳得常2010基于
 Warning--empty booktitle in Renard20081003
 Warning--there's a number but no volume in 肖竟华2003嵌入式实时操作系统
 Warning--empty journal in 串口调试
+Warning--there's a number but no volume in 史小斌2003VxWorks
+Warning--there's a number but no volume in 籍林峰2004VxWorks
 Warning--there's a publisher but no address in USBdeveloperkitProgrammerGuide
+Warning--there's a publisher but no address in TronadoBSP
+Warning--there's a publisher but no address in BSP开发人员指南
 Warning--there's a publisher but no address in VxWorks网络程序员指南
+Warning--there's a publisher but no address in 周启平2004VxWorks
+Warning--there's a publisher but no address in 周启平2005VxWorks
+Warning--there's a publisher but no address in USB大全
 Warning--there's a publisher but no address in USB2.0硬件设计
+Warning--there's a publisher but no address in 圈圈教你玩USB
+Warning--there's a publisher but no address in 许永和2002USB
 Warning--there's a publisher but no address in 李肇庆2004串行端口技术
-You've used 30 entries,
+Warning--there's a publisher but no address in 陈智育2004VxWorks
+You've used 59 entries,
             2464 wiz_defined-function locations,
-            691 strings with 7454 characters,
-and the built_in function-call counts, 5513 in all, are:
-= -- 496
-> -- 222
-< -- 0
-+ -- 104
-- -- 52
-* -- 244
-:= -- 853
-add.period$ -- 90
-call.type$ -- 30
+            836 strings with 11136 characters,
+and the built_in function-call counts, 14824 in all, are:
+= -- 1432
+> -- 473
+< -- 1
++ -- 220
+- -- 110
+* -- 939
+:= -- 2144
+add.period$ -- 186
+call.type$ -- 59
 change.case$ -- 0
 chr.to.int$ -- 0
-cite$ -- 52
-duplicate$ -- 273
-empty$ -- 606
-format.name$ -- 66
-if$ -- 1293
+cite$ -- 95
+duplicate$ -- 949
+empty$ -- 1577
+format.name$ -- 143
+if$ -- 3411
 int.to.chr$ -- 0
-int.to.str$ -- 30
-missing$ -- 44
-newline$ -- 152
-num.names$ -- 30
-pop$ -- 150
+int.to.str$ -- 59
+missing$ -- 69
+newline$ -- 298
+num.names$ -- 59
+pop$ -- 261
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 97
+skip$ -- 216
 stack$ -- 0
-substring$ -- 225
-swap$ -- 4
-text.length$ -- 0
+substring$ -- 1312
+swap$ -- 16
+text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
-warning$ -- 22
-while$ -- 38
-width$ -- 32
-write$ -- 307
-(There were 24 warnings)
+warning$ -- 36
+while$ -- 86
+width$ -- 61
+write$ -- 610
+(There were 37 warnings)

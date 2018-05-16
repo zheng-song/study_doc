@@ -29,22 +29,24 @@
 %\date{\today}
 
 \zhabstract{
-	通常在软件开发、移植、运行时都需要输出一些调试或日志信息，对于嵌入式设备而言通常使用串口来进行这些信息的传输，在VxWorks的集成开发环境Tornado中也有相关的调试工具，但是其比较适合用户软件的开发环境当中，不适用于实际的生产环境当中，同时由于目前大多数的设备都已不再将RS-232的串口作为必须的标准接口，而是大量的使用USB接口，因此在调试信息的传输过程中只能够使用USB接口，本文基于VxWorks开发出一个小巧易用的调试信息的传输通道，使用CP2102模块来进行USB口转串口的实际硬件部分，并编写了一个VxWorks下的USB口转串口驱动以及上层的应用层接口部分， 本项目来源于中船重工的实际需求。
+	通常在软件开发、移植、运行时都需要输出一些调试或日志信息，对于嵌入式设备而言通常使用串口来进行这些信息的传输，在VxWorks的集成开发环境Tornado中也有相关的调试工具，但是其比较适合用户软件的开发环境当中，不适用于实际的生产环境当中，同时由于目前大多数的设备都已不再将RS-232的串口作为必须的标准接口，而是大量的使用USB接口，因此在调试信息的传输过程中只能够使用USB接口，本文基于VxWorks开发出一个小巧易用的调试信息的传输通道，使用CP2102模块来实现USB口转串口的硬件部分，并编写了一个VxWorks下的USB口转串口驱动以及上层的应用层接口部分， 本项目来源于中船重工的实际需求。
 
-本文首先对课题的背景和需求进行了分析，给出了总体的设计方案，并给出介绍了本次的设计中需要使用的和了解的关键技术。然后从VxWorks下的I/O系统和驱动程序的关系入手，分析了VxWorks下I/O系统调用和驱动程序的实现过程，在此基础上实现了我们调试通道的必须的USB口转串口驱动，该驱动具有双向缓冲功能，同时具有即插即用、使用方便等特点。接着我们设计了调试通道的传输协议，并给出了两个上层应用的接口， 一个Log日志接口，一个标准输出重定向接口。 
-
-最后我们通过对系统的各个部分进行测试和整体测试，验证了本次的调试通道设计基本完成，系统运行可靠，满足所需完成的要求。
+	本文首先对课题的背景和需求进行了分析，给出了总体的设计方案，根据我们的方案需求，我们分析了VxWorks下的设备驱动所需的关键技术，然后在VxWorks下设计出了一个特殊的USB口转串口的驱动程序和一个普通的USB口转串口驱动程序，驱动程序具有双向缓冲功能，同时具有即插即用、使用方便等特点。
 	
+	然后我们给上层需要输出调试信息的应用设计了两个调试接口。一个Log调试接口，我们为这个接口设计了一个自定义的调试通道的传输协议；另外我们也给出了一个标准输出重定向的调试接口，方便开发人员直接使用标准输出进行调试信息的输出。
+	 
+
+	最后我们通过对系统的整体测试和对各个部分分别进行测试，验证了本次的调试通道设计基本完成，系统运行可靠，满足所需完成的要求。
 }
 \zhkeywords{嵌入式系统，设备驱动开发，USB口转串口，VxWorks，CP2102}
 
 \enabstract
 {
-    Generally, some debugging or log information needs to be output during software development, porting, and runtime. For embedded devices, serial ports are commonly used for the transmission of this information. There are also related debugging tools in Tornado, an integrated development environment of VxWorks. It is more suitable for the development environment of the user software, does not apply to the actual production environment, and at the same time because most of the current devices no longer use the RS-232 serial port as a required standard interface, but use a lot of USB interfaces. Only the USB interface can be used in the transmission of debugging information. This article has developed a small and easy-to-use debugging information transmission channel based on VxWorks. It uses the CP2102 module to perform the USB port to the actual hardware part of the serial port, and wrote a VxWorks USB port to serial port driver and the upper application layer interface part, this project comes from the actual needs of CSIC(China Shipbuilding Industry Corporation).
+    Generally, some debugging or log information needs to be output during software development, porting, and runtime. For embedded devices, serial ports are commonly used for the transmission of this information. There are also related debugging tools in Tornado, an integrated development environment of VxWorks. It is suitable for the development environment of the user software, not for the actual production environment, and at the same time，because most of the current devices no longer use the RS-232 serial port as a required standard interface, but use a lot of USB interfaces. Only the USB interface can be used in the transmission of debugging information. based on VxWorks,This thesis has developed a small and easy-to-use debugging information transmission channel which uses the CP2102 module to implement the hardware part of the USB port to the serial port, and than we wrote a USB port to serial port driver  and the upper application layer interface part under VxWorks. this project comes from the actual needs of CSIC(China Shipbuilding Industry Corporation).
 
-	This paper first analyzes the background and requirements of the project, gives the overall design plan, and gives the key technologies that are used and understood in this design. Then start with the relationship between I/O system and driver under VxWorks, analyze the process of I/O system call and driver under VxWorks, and realize the necessary USB port to serial port driver of our debugging channel. The driver has two-way buffering function, and has plug-and-play, easy to use and other features. Then we designed the transmission protocol of the debug channel, and gave two upper application interfaces, a Log log interface, and a standard output redirection interface.
+	Firstly, This paper analyzes the background and the requirements of the project, gives the overall design plan, and gives the key technologies that are used and   understood in this design. Then it starts with the relationship between I/O system and driver under VxWorks, analyzes the process of I/O system call and driver under VxWorks, and realizes the necessary USB port to serial port driver of our debugging channel. The driver has two-way buffering function, and has plug-and-play, easy to use and other features. Then we designed the transmission protocol of the debug channel, and gave two upper application interfaces, a Log log interface, and a standard output redirection interface.
 
-	Finally, we test and test the various parts of the system to verify that the design of the debug channel is basically completed, the system is running reliably, and the required requirements are fulfilled.
+	Finally, through overall testing and testing of the various parts of the system, we verified that the design of the debugging channel was basically completed, the system is running reliably, and the required requirements are fulfilled.
 
 }
 \enkeywords
