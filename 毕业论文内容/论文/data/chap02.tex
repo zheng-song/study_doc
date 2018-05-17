@@ -20,12 +20,13 @@
 
 \subsection{VxWorks驱动开发}
 	
-	在VxWorks当中使用I/O子系统来管理设备驱动，I/O 子系统在整个VxWorks当中起着承上启下的作用，各种类型的设备都必须要向I/O子系统进行注册才能够被内核访问\cite{VxWorks内核解读}\cite{曹桂平2011VxWorks}。I/O子系统在VxWorks当中的作用是维护系统设备表、系统驱动表、系统文件描述符表。设备驱动在VxWorks中就靠这三个数据结构来进行管理，所以对于设备驱动而言非常重要。设备驱动程序初始化时会对硬件完成初始化的配置，同时会向I/O子系统注册自己,注册之后I/O子系统才能找到该驱动。
+	在VxWorks当中使用I/O子系统来管理设备驱动，I/O 子系统在整个VxWorks当中起着承上启下的作用，各种类型的设备都必须要向I/O子系统进行注册才能够被内核访问,I/O子系统在VxWorks当中的作用是维护系统设备表、系统驱动表、系统文件描述符表\cite{VxWorks内核解读}\cite{曹桂平2011VxWorks}。设备驱动在VxWorks中就靠这三个数据结构来进行管理，所以对于设备驱动而言非常重要。设备驱动程序初始化时会对硬件完成初始化的配置，同时会向I/O子系统注册自己,注册之后I/O子系统才能找到该驱动。
 
 \subsubsection{VxWorks I/O 系统}
-	通常操作系统为了平台的无关性都会为应用程序提供一套标准的接口，VxWorks也不例外，它为应用层的提供了接口函数creat()、open()、unlink()、remove()、close()、rename()、read()、write()、ioctl()、lseek()、readv()、writev()等\cite{陈洋2007VxWorks}\cite{Wu2008Implementation}\cite{Zhang2010Design}，我们将其称作为标准I/O 库。
-	这样就可以通过调整底层驱动或者是接近驱动那部分的操作系统中间层来实现应用程序的通用性，提高应用层的开发效率，避免重复编码。在Mac OS、Linux、或Windows当中会把这套接口以标准库的形式呈现，但是在VxWorks中它们是由系统的内核实现的，直接以内核文件的形式提供，它们都位于ioLib.c文件下\cite{VxWorks内核解读}。
-	在VxWorks中一个很大的特点是它不会区分用户态和内核态，所有的内核函数都可以由用户程序直接进行调用，这样就减少了中断转入内核态再继续执行这一个过程，这对于强实时性系统而言极为重要，因为这样减少了时间开销，但是这样减少了使用权限上的限制，为内核带来了不安全性，极易导致内核的崩溃，所以VxWorks系统上应用程序的开发和使用对开发人员的要求比较高。
+	通常操作系统为了平台的无关性都会为应用程序提供一套标准的接口，VxWorks也不例外，它为应用层的提供了接口函数有creat()、open()、unlink()、remove()、close()、rename()、read()、write()、ioctl()、lseek()、readv()、writev()等\cite{陈洋2007VxWorks}\cite{Wu2008Implementation}\cite{Zhang2010Design}，我们将其称作为标准I/O 库。
+	这样就可以在对应用层的程序进行开发和移植的时候使用同一套接口，大大提高了开发的效率，避免了重复工作，而对于操作系统而言则是通过调整底层驱动或者操作系统中间层来为标准IO提供实现的机制。在Mac OS、Linux、或Windows当中会把这套接口以标准库的形式呈现，但是在VxWorks中它们是由系统的内核实现的，直接以内核文件的形式提供的，它们都位于ioLib.c文件下\cite{VxWorks内核解读}。
+	
+	VxWorks与通用操作系统的一个很大的不同点是它不会区分用户态和内核态，所有的内核函数都可以不加限制的由用户程序直接进行调用，这样就减少了中断转入内核态再继续执行这一个过程，这对于强实时性系统而言极为重要，因为这样减少了时间开销，但是这样减少了使用权限上的限制，为内核带来了不安全性，极易导致内核的崩溃，所以VxWorks系统上应用程序的开发和使用对开发人员的要求比较高。
 		
 	I/O调用结构如\autoref{fig:I/O调用}所示。
 	\begin{figure}[!h]
@@ -37,71 +38,51 @@
 	
 \subsubsection{系统设备表}
 	系统设备表是VxWorks中为了管理系统上的所有设备而使用的一个链表。系统设备表在系统中的连接方式如\autoref{fig:VxWorks系统设备示意图}所示。wind内核规定每一个设备都必须使用一个DEV\_ HDR的结构来表示该设备，该结构中只包含有三个成员：一个设备链表节点;一个设备驱动号；一个指向设备名的指针。
-	其定义如下\cite{VxWorks内核解读}：
-\lstset{language=C}
-\begin{lstlisting}
-/*h/iosLib.h*/
-typedef struct
-{ 
-  DL_NODE node; 
-  short drvNum;  
-  char * name; 
-}DEV_HDR; /* 这个结构是所有设备自定义结构体的第一个成员 */
-\end{lstlisting}
-
-VxWorks系统提供了一个设备的注册函数iosDevAdd( DEV\_ HDR *pDevHdr, char *name, int drvnum)，该函数用来将一个设备添加到系统设备表当中，系统设备表在每次添加设备时就会增加一个节点，删除设备时就会减少一个节点，一个设备添加到系统之后，就可以使用open()、remove()通过文件名对所有设备链表中的表项进行匹配，匹配成功之后就可以实现文件与设备的连接\cite{刘小军2008基于},之后就可以使用相对应的注册的设备驱动进行其他的文件操作。VxWorks中使用最佳匹配的方式进行设备名匹配。
-
+	其定义如\autoref{fig:DEVHDR} 所示。
 
 \begin{figure}[!h]
 \centering
 \includegraphics[width=1.0\textwidth]{./graphics/vxworks-device-link.pdf}
 \caption{VxWorks系统设备示意图}\label{fig:VxWorks系统设备示意图}
 \end{figure}
+	
+\begin{figure}[!h]
+\centering
+\includegraphics[width=1.0\textwidth]{./graphics/DEVHDR.pdf}
+\caption{DEV\_ HDR结构体}\label{fig:DEVHDR}
+\end{figure}
+
+VxWorks系统提供了一个设备的注册函数iosDevAdd( DEV\_ HDR *pDevHdr, char *name, int drvnum)，该函数用来将一个设备添加到系统设备表当中，系统设备表在每次添加设备时就会增加一个节点，删除设备时就会减少一个节点，一个设备添加到系统之后，就可以使用open()函数通过文件名对所有设备链表中的表项进行匹配，匹配成功之后就可以实现文件与设备的连接\cite{刘小军2008基于},之后就可以使用相对应的注册的设备驱动进行其他的文件操作。VxWorks中使用最佳匹配的方式进行设备名匹配。
 
 \subsubsection{系统驱动表}	
-	系统驱动表用于管理当前注册到I/O子系统下的所有驱动程序，所管理的驱动既可以是直接驱动硬件工作的驱动层，也可以是驱动的中间层\cite{VxWorks内核解读}\cite{罗国庆2003VxWorks}。
+	系统驱动表用于管理当前注册到I/O子系统下的所有驱动程序，所管理的驱动既可以是直接驱动硬件工作的驱动层，也可以是驱动的中间层\cite{VxWorks内核解读}。
 	
-	VxWorks中使用数组来实现系统驱动表，表中的每一个表项都是一个 DRV\_ ENTRY 类型的结构，该结构定义在内核的头文件iosLibP.h当中，其定义如下\cite{VxWorks内核解读}：
-\lstset{language=C}
-\begin{lstlisting}
-typedef struct  
-{ 
-  FUNCPTR de_create; /* 指向驱动的create()函数 */
-  FUNCPTR de_delete; /* 指向驱动的delete()函数 */
-  FUNCPTR de_open; 	 /* 指向驱动的open()函数 */
-  FUNCPTR de_close;  /* 指向驱动的close()函数 */
-  FUNCPTR de_read;   /* 指向驱动的read()函数 */
-  FUNCPTR de_write;  /* 指向驱动的write()函数 */
-  FUNCPTR de_ioctl;  /* 指向驱动的ioctl()函数 */
-  BOOL de_inuse;     /* 用于指示表项是否空闲*/
-} DRV_ENTRY;/* 系统驱动表中的条目 */ 
-\end{lstlisting}
+	VxWorks中使用数组来实现系统驱动表，表中的每一个表项都是一个 DRV\_ ENTRY 类型的结构，该结构定义在内核的头文件iosLibP.h当中，其定义如\autoref{fig:DEVENTRY}所示。
+	
+\begin{figure}[!h]
+\centering
+\includegraphics[width=1.0\textwidth]{./graphics/DEVENTRY.pdf}
+\caption{DEV\_ ENTRY结构体}\label{fig:DEVENTRY}
+\end{figure}
 
 DEV\_ ENTRY结构体类型当中的成员都是结构体指针，每一个成员指向驱动程序中的一个用于完成特定功能的实际模块，这些模块的功能 要符合IO系统预定义好的标准，要与用户层提供标准函数接口一一对应\cite{VxWorks内核解读}\cite{VxWorksDriverAPI}\cite{Wind2003VxWorks}。DEV\_ ENTRY结构中还有一个相对特殊的成员 de\_ inuse 若该成员空闲则表示该表项未被使用。这个结构体中的函数指针实际指向的内容由驱动调用iosDrvInstall()函数来提供。 该函数的作用就是将驱动注册到系统驱动表当中，并根据注册的内容来填充DRV\_ ENTRY表项的内容。
 
 
 \subsubsection{系统文件描述符表}
-	系统描述符表用于管理当前系统打开的所有文件描述符。其底层实现也是一个数组，文件描述符表的表项索引被用作文件描述符的ID(即open()函数返回值)，系统中每次使用open()调用就会占用一个系统文件描述符的表项。VxWorks中的标准输入、标准输出、标准错误输出虽然使用 0，1，2 三个文件描述符来表示，但是它在底层的实现上可能并不是占用了三个表项，而是只占用一个表项，即三个文件描述符指向同一个表项\cite{基于VxWorks的嵌入式实时系统设计}\cite{VxWorks内核解读}\cite{An2003Implementation}，这一点是需要注意的。
+	系统描述符表用于管理当前系统打开的所有文件描述符，在底层也是用一个数组来实现的。文件描述符表的表项索引会被当做是文件描述符的ID(即open()返回值)来使用，系统中每次使用open()调用就会占用一个系统文件描述符的表项。VxWorks中的标准输入、标准输出、标准错误输出虽然使用 0，1，2 三个文件描述符来表示，但是它在底层的实现上可能并不是占用了三个表项，而是只占用一个表项，即三个文件描述符指向同一个表项\cite{VxWorks内核解读}\cite{An2003Implementation}，这一点是需要注意的。
 		
 	
-系统文件描述符表中每一个表项都使用 FD\_ ENTRY 这个结构来表示，这个结构定义在内核的头文件iosLibP.h 中，其定义如下\cite{VxWorks内核解读}：
-\lstset{language=C}
-\begin{lstlisting}
-typedef struct  
-{ 
-  DEV_HDR * pDevHdr;/* 该设备的设备头 */ 
-  int value; /* 设备的驱动号 */ 
-  char * name; /* 设备名指针 */ 
-  int taskId; /* 设备的任务ID */ 
-  BOOL inuse;  
-  BOOL obsolete; /* 底层驱动是否仍然存在 */ 
-  void * auxValue;/* 驱动自定指针，根据驱动的需求实现 */ 
-  void * reserved; /* 保存未用 */ 
-} FD_ENTRY; /* 系统文件描述符表的表项 */
-\end{lstlisting}
+系统文件描述符表中每一个表项都使用 FD\_ ENTRY 这个结构来表示，这个结构定义在内核的头文件iosLibP.h 中，其定义如\autoref{fig:FDENTRY}所示。
 
 
-用户的应用程序每次使用open()系统调用系统文件描述符表中就会增加一个有效表项，该表项的FD\_ ENTRY结构体会根据open()调用的内容来进行填充，每一个文件能够进行的open()调用是有限制的，每个驱动的FD\_ ENTRY结构数组满了之后就无法再对这个设备进行open()操作，此时 open()函数将会失败返回。系统会在表中的索引偏移 3 之后找一个最先找到的未使用的id作为文件描述符返回给用户，之后用户对设备的其他操作只需要使用这个文件描述符作为文件句柄即可。	
+\begin{figure}[!h]
+\centering
+\includegraphics[width=1.0\textwidth]{./graphics/FDENTRY.pdf}
+\caption{FD\_ ENTRY结构体}\label{fig:FDENTRY}
+\end{figure}
+
+
+用户的应用程序每次使用open()系统调用系统文件描述符表中就会增加一个有效表项，该表项的FD\_ ENTRY结构体会根据open()调用的内容来进行填充，每一个文件能够进行的open()调用是有限制的，每个驱动的FD\_ ENTRY结构数组满了之后就无法再对这个设备进行open()操作，此时 open()函数将会失败返回\cite{VxWorks内核解读}。系统会在表中的索引偏移 3 之后找一个最先找到的未使用的id作为文件描述符返回给用户，之后用户对设备的其他操作只需要使用这个文件描述符作为文件句柄即可。	
 	
 \subsection{VxWorks 中的通信机制}
 	
@@ -170,7 +151,7 @@ Wind内核同时支持UNIX BSD风格的信号和POSIX 信号，但是Vxworks中�
 \end{figure}
 
 
-USB的体系结构将USB系统分成了三个部分：USB主机(Host)、USB集线器(Hub)、USB设备(Device)。其中我们需要了解的关键部分是USB主机和USB设备。
+USB的体系结构由三个部分组成，分别是USB主机(Host)、USB集线器(Hub)、USB设备(Device)。其中我们需要了解的关键部分是USB主机和USB设备。
 	
 \begin{enumerate}
 \item \textbf{USB主机}\\
@@ -180,25 +161,25 @@ USB的体系结构将USB系统分成了三个部分：USB主机(Host)、USB集�
 
 \item \textbf{USB设备}
 
-	USB设备指的是提供具体功能的而外部USB设备，是相对USB主机而言的，它们受USB主机的控制，只能对主机的请求进行被动响应。USB主机端会在检测到USB设备的动作之后通过协议和USB设备进行通信，对其进行必要的初始化配置，并给设备提供适合的驱动程序(如果有的话)，一个USB设备会通常会有很多的属性，它会通过这些属性来完成主机的配置要求。一些USB设备的属性如下：
+	USB设备指的是提供具体功能的而外部USB设备，是相对USB主机而言的，它们受USB主机的控制，只能对主机的请求进行被动响应。USB主机端会在检测到USB设备的动作之后会通过默认管道和USB设备进行通信，对其进行必要的初始化配置，并给设备提供适合的驱动程序(如果有的话)，一个USB设备会通常会有很多的属性，它会通过这些属性来完成主机的配置要求。一些USB设备的属性如下：
 	\begin{itemize}
 	\item \textbf{描述符(Descriptor)属性}\\
-	USB协议中定义了一套描述USB设备的功能和属性的固定结构的描述符，包括设备描述符、配置描述符、接口描述符、端点描述符、字符串描述符\cite{张杰2008基于}\cite{边海龙2004USB}除此之外，设备还可以提供自己专用的描述符，分为设备类描述符和供应商自定义描述符，我们使用的USB口转串口设备就不属于一个标准的USB设备，它会为我们提供供应商自定义的描述符，我们之后需要用它来对设备进行识别。
+	描述符是USB协议中定义的一套用来描述USB设备的功能和属性的固定结构，我们可以通过描述符了解设备的各种属性和，描述符又分为设备描述符、配置描述符、接口描述符、端点描述符、字符串描述符\cite{张杰2008基于}\cite{边海龙2004USB}除此之外，设备还可以提供自己专用的描述符，分为设备类描述符和供应商自定义描述符，我们使用的USB口转串口设备就不属于一个标准的USB设备，它会为我们提供供应商自定义的描述符，我们之后需要用它来对设备进行识别。
 	
 	\item \textbf{类(Class)属性}\\
-	由于USB协议支持许多的外围设备，所以在USB协议中将USB设备预先分成了一些类型，分类的方法是根据功能来分，将功能相近的设备分配到同一类当中，如打印机类、键盘类等。这样主机端只需要提供类驱动程序便可以驱动大多数的USB设备，而不需要再为每一个设备提供驱动程序。这大大的方便的设备的制造商。他们的设备只需要符合某一类的驱动，就可以使用该类驱动程序来驱动其设备，之后只需要实现自己的独特的客户端激动即可，不需要再实现复杂的底层驱动程序\cite{李雪红2004USB}。	
+	由于USB协议支持许多的外围设备，而这些设备又可以根据功能来分成一些相近的类，如打印机类、键盘类等。这样主机端只需要提供类驱动程序便可以驱动大多数的USB设备，而不需要再为每一个设备提供一个完整的驱动程序。这大大的方便的设备的制造商。他们的设备只需要符合某一类的驱动，就可以使用该类驱动程序来驱动其设备，之后只需要实现简单的包含有设备特性的客户端驱动即可，不需要再实现复杂的底层驱动程序\cite{李雪红2004USB}。	
 	
 	\item \textbf{功能(Function)/接口(Interface)属性}\\
 	功能或接口是USB协议中定义的设备的某种能力，Function是从功能角度来说的，从设备的角度来说，被称为Interface。一个设备可以拥有几个接口，每一个接口负责完成设备的一个特定的功能，并且这个接口的功能是可以替换的，当USB设备处于可配置状态的时候能够通过控制命令来改变某一个接口的功能，对于USB设备的每一个接口都必须要有一个接口描述符来描述。
 	
 	\item \textbf{端点(Endpoint)属性}\\
-	端点是USB设备与USB主机逻辑上的通信流的终点，每个设备都拥有一个可独立进行操作的端点集合，且每个端点在使用时都要先初始化其数据传输方向(IN/OUT),即使端点号相同但是传输方向不同的通信点也是不同的端点。端点0被USB规范保留用作设备枚举和配置过程中的数据传输端点，与端点0对应的管道是默认管道，设备的所有端点共享端点0\cite{李雪红2004USB}。
+	端点是USB设备与USB主机逻辑上的通信流的终点，每个设备都拥有一个可独立进行操作的端点集合，且每个端点在使用时都要先初始化其数据传输方向(IN/OUT),即使端点号相同但是传输方向不同的通信点也是不同的端点\cite{李雪红2004USB}。
 	
 	\item \textbf{管道}\\
 	管道可以看做是设备上的一个端点和主机上的软件的联合体，设备和主机间的数据传输要基于管道进行。在USB的通信过程中首先要建立一个管道才能够进行数据的传输，USB设备在和主机通信时都会建立一个默认的管道，这个管道对应的端点是默认端点0，之后需要自己使用其它的端点来建立我们的数据传输过程中需要使用的输入或输出管道。在我们的USB口转串口驱动中会为每一个设备建立两个管道，一个批量输出管道和一个批量输入管道。
 	
 	\item \textbf{设备地址}\\
-	设备地址用于区分USB系统中的一个USB设备，设备地址由主机分配且是唯一的。设备地址共有7位，地址0是缺省地址，在设备初始化的时候使用，理论上系统可以区分127个USB设备，实际中由于USB总线带宽的限制，无法同时支持这么多设备工作\cite{李雪红2004USB}。
+	设备地址用于区分USB系统中的一个USB设备的特殊标识，设备地址会在设备初始化之后由主机进行分配且是唯一的。设备地址单元共有7bit，其中地址0是缺省地址，在设备初始化的时候使用，理论上系统可以区分127个USB设备\cite{李雪红2004USB}。
 	\end{itemize}	
 	
 \end{enumerate}

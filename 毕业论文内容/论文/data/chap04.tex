@@ -143,7 +143,7 @@ ioTaskStdSet()是VxWorks专门用来进行任务级的重定向的函数。其�
 \begin{lstlisting}
 void ioTaskStdSet(int taskId, int stdFd, int newFd);
 \end{lstlisting}\\
-在VxWorks中每一个任务都有一个数组taskStd，用于表明这个任务的标准输入、标准输出、标准错误，函数ioTaskStdSet()的功能就是将特定任务的标准描述符重定向到newFd，newFd需要是一个文件或者设备的描述符。第一个参数taskId表示需要进行重定向的任务的ID(ID为0表示该任务本身)，第二个参数是需要被重定向的某个标准描述符(0,1,2),第三个参数是需要重定向到的文件描述符。该函数没有返回值。
+在VxWorks中每一个任务都有一个数组taskStd，用于表明这个任务的标准输入、标准输出、标准错误，函数ioTaskStdSet()的功能就是将特定任务的标准描述符重定向到newFd，newFd需要是一个文件或者设备的描述符。
 
 
 \section{Log接口的实现}

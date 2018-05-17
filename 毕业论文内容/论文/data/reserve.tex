@@ -1,3 +1,7 @@
+缓冲区当中需要考虑的关键问题是缓冲区的满和空的判断,因为缓冲区满或者是空都有可能出现读指针或者是写指针指向同一个位置。 我们处理这个问题的策略是在缓冲区中保持一个存储单元保存为未使用的状态。即一个大小为N的缓冲区中最多只能够存入N-1个数据。如果读写指针指向同一个位置那么缓冲区即为空。如果写指针位于读指针的相邻后一个位置，那么缓冲区为满，在测试缓冲区是否满时做取余运算。
+
+驱动通常会作为操作系统内核的一部分来实现，即便现在很多系统支持驱动的动态加载，但是驱动代码在执行时，依然是以内核代码模式进行执行的，所以如果驱动程序存在 BUG，会导致操作系统的崩溃。所以调试驱动是一项十分关键的工作，必须对驱动进行仔细检查，并需要经受长时间运行考验,其调试过程同时也是对硬件和驱动进行验证的过程。
+
 % 查重
 VxWorks中信号量是一个指向SEMAPHORE类型的结构指针，其定义如下所示\cite{胡明民2012基于实时操作系统}：
 \lstset{language=C}
@@ -36,7 +40,86 @@ typedef struct semaphore
 
 
 
+\section{参考文献}
 
+@article{籍林峰2004VxWorks,
+  title={VxWorks操作系统中中断的应用},
+  author={籍林峰 and 曹伟},
+  journal={雷达与对抗},
+  number={3},
+  pages={67-69},
+  year={2004},
+}
+
+
+@book{USB2.0硬件设计,
+  title={USB 2.0硬件设计},
+  author={萧世文 and 宋延清},
+  publisher={清华大学出版社},
+  year={2006},
+}
+
+
+@book{罗国庆2003VxWorks,
+  title={VxWorks与嵌入式软件开发},
+  author={罗国庆},
+  publisher={机械工业出版社},
+  year={2003},
+}
+
+
+@book{许永和2002USB,
+  title={USB外围设备设计与应用},
+  author={许永和},
+  publisher={中国电力出版社},
+  year={2002},
+}
+
+
+@book{周启平2004VxWorks,
+  title={VxWorks下设备驱动程序及BSP开发指南},
+  author={周启平 and 张杨},
+  publisher={中国电力出版社},
+  year={2004},
+}
+
+@book{基于VxWorks的嵌入式实时系统设计,
+  title={基于VxWorks的嵌入式实时系统设计},
+  author={王金刚},
+  publisher={清华大学出版社},
+  year={2004},
+}
+
+@book{陈智育2004VxWorks,
+  title={VxWorks程序开发实践},
+  author={陈智育 and 温彦军 and 陈琪},
+  publisher={人民邮电出版社},
+  year={2004},
+}
+
+
+@book{圈圈教你玩USB,
+  title={圈圈教你玩USB},
+  author={刘荣},
+  publisher={北京航空航天大学出版社},
+  year={2009},
+}
+
+@article{史小斌2003VxWorks,
+  title={VxWorks串行设备驱动模式及其实现},
+  author={史小斌 and 孙献璞 and 张艳玲},
+  journal={现代电子技术},
+  number={10},
+  pages={72-74},
+  year={2003},
+}
+
+
+@article{串口调试,
+  title={基于虚拟串口和串口调试工具的串口编程调试系统设计},
+  author={晋成凤 and 晋成龙},
+  year={2010},
+}
 
 
 
