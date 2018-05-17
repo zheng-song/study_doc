@@ -11,48 +11,47 @@
 \contentsline {subsubsection}{\numberline {2.2.1.1}VxWorks I/O 系统}{5}{subsubsection.2.2.1.1}
 \contentsline {subsubsection}{\numberline {2.2.1.2}系统设备表}{6}{subsubsection.2.2.1.2}
 \contentsline {subsubsection}{\numberline {2.2.1.3}系统驱动表}{7}{subsubsection.2.2.1.3}
-\contentsline {subsubsection}{\numberline {2.2.1.4}系统文件描述符表}{7}{subsubsection.2.2.1.4}
+\contentsline {subsubsection}{\numberline {2.2.1.4}系统文件描述符表}{8}{subsubsection.2.2.1.4}
 \contentsline {subsection}{\numberline {2.2.2}VxWorks 中的通信机制}{8}{subsection.2.2.2}
 \contentsline {subsection}{\numberline {2.2.3}USB技术}{11}{subsection.2.2.3}
-\contentsline {section}{\numberline {2.3}本章小结}{13}{section.2.3}
-\contentsline {chapter}{\numberline {3}驱动程序的设计和实现}{14}{chapter.3}
-\contentsline {section}{\numberline {3.1}USB口转串口驱动的设计}{14}{section.3.1}
-\contentsline {subsection}{\numberline {3.1.1}VxWorks上的USB开发}{15}{subsection.3.1.1}
-\contentsline {subsection}{\numberline {3.1.2}CP2102开发}{17}{subsection.3.1.2}
-\contentsline {subsection}{\numberline {3.1.3}环形缓冲区的设计}{18}{subsection.3.1.3}
-\contentsline {subsection}{\numberline {3.1.4}信号量的设计}{19}{subsection.3.1.4}
-\contentsline {section}{\numberline {3.2}USB转串口驱动的实现}{20}{section.3.2}
-\contentsline {subsection}{\numberline {3.2.1}特定需求单设备驱动的实现}{21}{subsection.3.2.1}
-\contentsline {subsubsection}{\numberline {3.2.1.1}设备的自定义结构}{21}{subsubsection.3.2.1.1}
-\contentsline {subsubsection}{\numberline {3.2.1.2}驱动注册和设备创建}{23}{subsubsection.3.2.1.2}
-\contentsline {subsubsection}{\numberline {3.2.1.3}设备的初始化}{25}{subsubsection.3.2.1.3}
-\contentsline {subsubsection}{\numberline {3.2.1.4}设备打开/关闭函数}{27}{subsubsection.3.2.1.4}
-\contentsline {subsubsection}{\numberline {3.2.1.5}设备的读写}{28}{subsubsection.3.2.1.5}
-\contentsline {subsubsection}{\numberline {3.2.1.6}设备的控制操作}{30}{subsubsection.3.2.1.6}
-\contentsline {subsubsection}{\numberline {3.2.1.7}驱动卸载}{30}{subsubsection.3.2.1.7}
-\contentsline {subsection}{\numberline {3.2.2}通用多设备驱动的实现}{32}{subsection.3.2.2}
-\contentsline {subsubsection}{\numberline {3.2.2.1}设备的自定义结构体}{32}{subsubsection.3.2.2.1}
-\contentsline {subsubsection}{\numberline {3.2.2.2}驱动注册和设备创建}{34}{subsubsection.3.2.2.2}
-\contentsline {subsubsection}{\numberline {3.2.2.3}设备读写}{35}{subsubsection.3.2.2.3}
-\contentsline {section}{\numberline {3.3}小结}{36}{section.3.3}
-\contentsline {chapter}{\numberline {4}应用层程序接口封装}{37}{chapter.4}
-\contentsline {section}{\numberline {4.1}应用层接口模块设计}{37}{section.4.1}
-\contentsline {section}{\numberline {4.2}Log协议的设计}{37}{section.4.2}
-\contentsline {section}{\numberline {4.3}标准输出重定向接口的实现}{38}{section.4.3}
+\contentsline {section}{\numberline {2.3}本章小结}{14}{section.2.3}
+\contentsline {chapter}{\numberline {3}驱动程序的设计和实现}{15}{chapter.3}
+\contentsline {section}{\numberline {3.1}VxWorks上的USB开发}{15}{section.3.1}
+\contentsline {section}{\numberline {3.2}CP2102开发}{17}{section.3.2}
+\contentsline {section}{\numberline {3.3}特定需求单设备驱动的实现}{19}{section.3.3}
+\contentsline {subsection}{\numberline {3.3.1}设备的自定义结构}{20}{subsection.3.3.1}
+\contentsline {subsection}{\numberline {3.3.2}驱动注册和设备创建}{22}{subsection.3.3.2}
+\contentsline {subsection}{\numberline {3.3.3}设备的初始化}{24}{subsection.3.3.3}
+\contentsline {subsection}{\numberline {3.3.4}设备打开/关闭函数}{26}{subsection.3.3.4}
+\contentsline {subsection}{\numberline {3.3.5}设备的读写}{27}{subsection.3.3.5}
+\contentsline {subsubsection}{\numberline {3.3.5.1}环形缓冲区的设计和实现}{29}{subsubsection.3.3.5.1}
+\contentsline {subsection}{\numberline {3.3.6}设备的控制操作}{31}{subsection.3.3.6}
+\contentsline {subsection}{\numberline {3.3.7}驱动卸载}{32}{subsection.3.3.7}
+\contentsline {section}{\numberline {3.4}通用多设备驱动的实现}{34}{section.3.4}
+\contentsline {subsection}{\numberline {3.4.1}设备的自定义结构体}{35}{subsection.3.4.1}
+\contentsline {subsection}{\numberline {3.4.2}驱动注册和设备创建}{36}{subsection.3.4.2}
+\contentsline {subsection}{\numberline {3.4.3}设备读写}{37}{subsection.3.4.3}
+\contentsline {section}{\numberline {3.5}小结}{37}{section.3.5}
+\contentsline {chapter}{\numberline {4}应用层程序接口封装}{38}{chapter.4}
+\contentsline {section}{\numberline {4.1}应用层接口模块设计}{38}{section.4.1}
+\contentsline {section}{\numberline {4.2}Log协议的设计}{38}{section.4.2}
+\contentsline {section}{\numberline {4.3}标准输出重定向接口的实现}{39}{section.4.3}
 \contentsline {subsection}{\numberline {4.3.1}RTP模式下标准输出重定向}{39}{subsection.4.3.1}
-\contentsline {subsection}{\numberline {4.3.2}task模式下标准输出重定向}{39}{subsection.4.3.2}
-\contentsline {section}{\numberline {4.4}Log接口的实现}{40}{section.4.4}
-\contentsline {section}{\numberline {4.5}Windows下的日志分析工具}{43}{section.4.5}
-\contentsline {chapter}{\numberline {5}系统的功能测试}{45}{chapter.5}
-\contentsline {section}{\numberline {5.1}设备添加到系统管理表}{45}{section.5.1}
-\contentsline {section}{\numberline {5.2}驱动程序读写测试}{46}{section.5.2}
-\contentsline {subsection}{\numberline {5.2.1}RTP模式下的读写测试}{46}{subsection.5.2.1}
-\contentsline {subsection}{\numberline {5.2.2}task模式下的读写测试}{47}{subsection.5.2.2}
-\contentsline {section}{\numberline {5.3}应用程序接口测试}{49}{section.5.3}
-\contentsline {subsection}{\numberline {5.3.1}标准输出重定向测试}{49}{subsection.5.3.1}
-\contentsline {subsection}{\numberline {5.3.2}Log日志接口测试}{50}{subsection.5.3.2}
-\contentsline {chapter}{\numberline {6}总结与展望}{52}{chapter.6}
+\contentsline {subsection}{\numberline {4.3.2}task模式下标准输出重定向}{41}{subsection.4.3.2}
+\contentsline {section}{\numberline {4.4}Log接口的实现}{41}{section.4.4}
+\contentsline {section}{\numberline {4.5}Windows下的日志分析工具}{44}{section.4.5}
+\contentsline {section}{\numberline {4.6}小结}{44}{section.4.6}
+\contentsline {chapter}{\numberline {5}系统的功能测试}{46}{chapter.5}
+\contentsline {section}{\numberline {5.1}设备添加到系统管理表}{46}{section.5.1}
+\contentsline {section}{\numberline {5.2}驱动程序读写测试}{47}{section.5.2}
+\contentsline {subsection}{\numberline {5.2.1}RTP模式下的读写测试}{47}{subsection.5.2.1}
+\contentsline {subsection}{\numberline {5.2.2}task模式下的读写测试}{48}{subsection.5.2.2}
+\contentsline {section}{\numberline {5.3}应用程序接口测试}{50}{section.5.3}
+\contentsline {subsection}{\numberline {5.3.1}标准输出重定向测试}{50}{subsection.5.3.1}
+\contentsline {subsection}{\numberline {5.3.2}Log日志接口测试}{51}{subsection.5.3.2}
+\contentsline {section}{\numberline {5.4}小结}{51}{section.5.4}
+\contentsline {chapter}{\numberline {6}总结与展望}{53}{chapter.6}
 \save@tocdepth \setcounter {tocdepth}{0}
-\contentsline {chapter}{致谢}{53}{section*.47}
-\contentsline {chapter}{参考文献}{54}{section*.49}
+\contentsline {chapter}{致谢}{54}{section*.47}
+\contentsline {chapter}{参考文献}{55}{section*.49}
 \contentsfinish 
