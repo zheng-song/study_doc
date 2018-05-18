@@ -3,7 +3,7 @@
 	设备驱动程序在操作系统中框架是操作系统的设计人员在设计操作系统时已经制定好的，	所以在进行驱动程序的开发时需要开发人员对操作系统和设备的硬件体系具有相当的了解，而且驱动程序的性能、可靠性也制约着系统的性能和可靠性。	
 
 
-\section{VxWorks上的USB开发}
+\section{VxWorks上的USB开发}\label{sec:USB开发}
 	在VxWorks当中I/O框架的实现放在内核文件ioLib.c当中，我们将它称为上层接口子系统，因为它负责给上层应用提供I/O接口，但是该接口并不会完成具体请求的实现，他只会在进行简单的处理之后将请求转发给I/O子系统，具体请求的处理工作会被发送到I/O子系统当中来处理。I/O子系统的定义放在在内核文件iosLib.c当中，I/O子系统对用户层而言通常是透明的，用户层一般不会直接调用I/O子系统中的函数，它是作为上层接口子系统与下层驱动系统的中间层来使用的。VxWorks的当中内核驱动层次结构如\autoref{fig:VxWorks内核驱动层次结构}所示。	
 
 \begin{figure}[!h]
@@ -107,7 +107,7 @@
 \hline
 {cp210xDrvInit()} & \tabincell{c}{这个模块用来初始化驱动程序，主要是与设备无关的一些\\全局变量并向系统注册该驱动} \\
 \hline
-{cp210xDevOpen()} & \tabincell{c}{这个模块用来转接I/O子系统分发过来的open()操作，实现设备的打开，\\返回文件描述符} \\
+{cp210xDevOpen()} & \tabincell{c}{这个模块用来转接I/O子系统分发过来的open()操作，实现设备的打开，\\返回设备的指针} \\
 \hline
 {cp210xDevClose()} & \tabincell{c}{这个模块用来转接I/O子系统分发过来的close()操作，实现设备的关闭，\\对设备占用资源进行清理} \\
 \hline
@@ -147,8 +147,7 @@
 
 
 \subsection{设备的自定义结构}
-	底层驱动都要对其驱动的设备维护一个自定义的数据结构，这个结构的第一个成员必须是
-	DEV\_ HDR结构体，其余的成员为该设备所需的关键参数。对于我们的USB口转串口设备需要保存的关键参数有：USB配置、读写缓冲区的指针、接口配置、端点地址等等。关键数据结构的定义如下： 
+	底层驱动都要为其所驱动的每一个设备维护一个设备的自定义数据结构，这个结构的第一个成员必须是DEV\_ HDR结构体，DEV\_ HDR这个结构是给系统维护该设备的驱动时使用的，其余的成员为该设备所需保存的关键参数，这些参数都是我们的驱动程序在设备运行时需要使用的，系统不会使用这些参数。对于我们的USB口转串口设备而言，我们需要保存的关键参数有：USB配置、读写缓冲区的指针、接口配置、端点地址等等。关键数据结构的定义如下： 
 	
 \lstset{language=C}
 \begin{lstlisting}
@@ -182,7 +181,7 @@ typedef struct cp210x_dev
 \noindent 部分成员的含义如下：
 
 \begin{itemize}
-\item DEV\_ HDR：这一成员必须是自定义设备结构的第一个成员，VxWorks 的I/O子系统会把所有的设备结构都看作是这个类型的结构，wind只会识别到DEV\_ HDR结构并对其进行管理，在系统的设备列表中，内核只使用DEV\_ HDR结构当中的成员。
+\item DEV\_ HDR：这一成员必须是自定义设备结构的第一个成员，VxWorks 的I/O子系统会把所有的设备结构都看作是这个类型的结构，系统只会识别到DEV\_ HDR结构并对其进行管理，在系统设备表、系统文件描述符表当中都需要使用该驱动中的DEV\_ HDR这个成员。
 \item numOpen：用来记录设备被打开的次数，每次调用open()函数打开该设备则numOpen加一，调用close()函数关闭设备则减一。
 \item nodeId：用来保存该设备在系统中的唯一ID号。
 \item configure、interface、interfaceAltsetting：用来保存设备的描述符中的配置、接口、可变接口信息。
@@ -195,18 +194,24 @@ typedef struct cp210x_dev
 
 
 
-\subsection{驱动注册和设备创建} 
+\subsection{驱动初始化} 
 	
-	底层的驱动程序都要提供一个函数给系统来调用，以便进行驱动程序的注册和初始化，这些工作的完成通常是在内核启动过程中进行的(即内核启动的时候会调用我们的驱动初始化函数)。对于此处的USB口转串口驱动我们定义cp210xDrvInit() 初始化函数,其主要完成驱动所需要的资源申请和系统的初始化，包括创建信号量、向系统注册驱动、创建设备、向USBD层注册。cp210xDevInit模块主要代码如下所示：
+	底层的驱动程序都要提供一个初始化函数给系统来调用，以便进行驱动程序的注册和初始化驱动必须的资源，这些工作通常是在内核启动过程中进行的，你必须将你的驱动加入到内核的启动列表当中，内核在启动的时候就会调用我们的驱动初始化函数。对于此处的USB口转串口驱动我们定义cp210xDrvInit()为初始化函数,其主要完成驱动所需要的资源的申请和全局变量的初始化，包括创建信号量、向系统注册驱动、创建设备、向USBD层注册。cp210xDevInit模块主要代码如下所示：
 \lstset{language=C}
 \begin{lstlisting}
 STATUS cp210xDrvInit(void)
-{
-  ... 	
+{ 	
+  if(cp210xDrvNum > 0)
+		return OK;
+  ...
+  	
+  OSS_MUTEX_CREATE(&cp210xWriteMutex);
+  OSS_MUTEX_CREATE(&cp210xReadMutex);
+  blockReadSem = semBCreate(SEM_Q_FIFO, SEM_EMPTY);	
   cp210xDrvNum = iosDrvInstall(NULL,NULL,cp210xDevOpen,cp210xDevClose,
 			cp210xDevRead,cp210xDevWrite,cp210xDevIoctl);
   ...
-  if( iosDevAdd(&pCp210xDev->cp210xDevHdr,CP210X_NAME,cp210xDrvNum) != OK)
+  if(iosDevAdd(&pCp210xDev->cp210xDevHdr,CP210X_NAME,cp210xDrvNum) != OK)
   ...  
   if(usbdClientRegister (CP210X_CLIENT_NAME, &cp210xHandle) != OK)
   ...  
@@ -215,12 +220,29 @@ STATUS cp210xDrvInit(void)
 }
 \end{lstlisting}\\
 
-	驱动会在进入初始化的时候首先检查该驱动是否已经安装，若已经安装了则无需再次安装，直接退出即可，cp210xDrvInit()通常是在usrRoot(usrConfig.c)中调用，但是你也可以手动调用这个函数对该驱动进行初始化操作。然后会进行一些驱动所需要的全局资源的初始化，如信号量、全局变量、看门狗等，接着调用iosDrvInstall()函数安装驱动的I/O函数，将其添加到驱动表当中，在我们的USB口转串口驱动当中不需要实现delete函数和create函数，直接将其指针置为NULL即可。
+	在调用驱动初始化函数时，驱动首先会检查自己是否已经安装过了，若已经安装了则无需再次安装，直接返回即可。我们通常会将驱动的初始化模块放在usrRoot(usrConfig.c)中调用，这样驱动就可以随着内核的启动而启动。但是你也可以将其当做是一个核外的模块来进行启动，在VxWorks中你需要加载驱动程序所在的库，然后直接运行cp210xDrvInit()函数即可。
+	驱动初始化时需要初始化我们用来在驱动的运行过程中使用的各种信号量，还需要调用iosDrvInstall()函数安装驱动的I/O函数，将其添加到驱动表当中，在我们的USB口转串口驱动当中不需要实现delete函数和create函数，直接将其指针置为NULL即可。
 	
-	注册完成之后还要向系统将该驱动程序添加到IO子系统当中，添加成功后会在系统的设备列表中显示该命名为CP210X\_ NAME的设备(CP210X\_ NAME只是一个宏定义，设备名可以自己更改)。此处即是我们的驱动程序中的一个特殊的地方，在没有识别到设备之前就已经创建好设备文件，只不过此时该设备还只是一个“假”的，只有软件实现，没有硬件支撑，即使此时已经可以打开该设备，向该设备写入数据，但是也只是写入到了系统的缓冲区当中而已，数据并没有发送到任何的硬件上。
+	此处和普通驱动不同的地方是，我们单设备驱动的初始化函数当中就已经初始化好了驱动所需要的缓冲区，并且已经先将设备添加到了I/O子系统当中，此时实际的设备并不存在，添加到系统当中的只是一个“假”设备，只有软件实现，没有实际的硬件支撑，即使此时已经可以打开该设备，向该设备写入数据，但是也只是写入到了系统的缓冲区当中而已，数据并没有发送到任何的硬件上。而普通的驱动程序 中的逻辑应当是在检测到设备插入，并且识别出该设备能够被我们的驱动程序所支持时才给其分配缓冲区、进行设备的初始化工作，最后再调用iosDevAdd()将设备注册到I/O子系统。
+	
+	在设备成功的添加到I/O子系统之后，系统的设备表当中就会显示该命名为CP210X\_ NAME的设备(CP210X\_ NAME只是一个宏定义，设备名可以自己更改)，我们可以在系统中使用iosDevShow命令来进行查看。
+	
 
-	接下来USB客户端驱动还需要向USBD层注册，注册完成之后会返回一个用于操作USBD的客户端handle，我们将其保存在cp210xHandle这个变量当中。然后还要注册一个动态注册的回调函数，当USBD层发现有USB设备的插拔动作时，就会根据我们注册时选定的设备类和接口类来判断是否需要调用我们注册的回调函数，由于我们的设备是一个特殊的设备，并不符合任何标准的USB设备类和接口类，于是我们将这两个参数置为USBD\_ NOTIFY\_ ALL,即任何USB设备的插拔都调用我们的注册的回调函数。之后我们在回调函数中根据设备的v设备ID和厂商ID来判断该设备是否能被我们的驱动所支持。
-	在回调函数中我们会发送标准的USB设备请求命令来获取该设备的设备描述符,设备描述符当中包含有设备的类、子类、协议、厂商ID等信息，详细的USB设备描述符的信息如\autoref{fig:usdbDescriptorGet} 所示;
+	在设备注册完之后我们还要将USB客户端驱动还需要向USBD层注册，在\autoref{sec:USB开发}中我们介绍过，USB主机架构将其分为三层来实现，USBD层就是为我们的客户端驱动所服务的，它负责管理USB的中断、热插拔等事件。它给我们提供了注册函数usbdClientRegister()和usbdDynamicAttachRegister(),使用usbdClientRegister()注册之后USBD等才能知道我们的客户端驱动的存在，并将我们的驱动加入到它的服务列表当中，它会给我们的驱动分配一个独一无二的句柄cp210xHandle，以后对USBD层进行操作是只需传递cp210xHandle这个独一无二的句柄USBD层就能区分是哪一个驱动在发送数据。
+	
+	usbdDynamicAttachRegister()用于注册我们的驱动所感兴趣的设备的热插拔事件，并像USBD层注册一个回调函数cp210xAttachCallback，当我们所感兴趣的热插拔事件发生时，USBD层会调用我们所注册的回调函数通知我们。usbdDynamicAttachRegister()函数的原型如\autoref{fig:usbdDynamicAttachRegister}所示。在热插拔的注册函数中我们需要指定我们所关心的设备是属于哪一个类、子类和协议，但是由于我们的USB口转串口设备并不属于任何一个标准的类、子类和协议层次，它使用的都是厂商自定义的协议，所以在此处我们将其注册为USBD\_ NOTIFY\_ ALL，即所有的USB设备的插拔都调用我们的注册的回调函数，之后我们在回调函数中根据设备的设备ID和厂商ID来判断该设备是否能被我们的驱动所支持。
+\begin{figure}[!h]
+\centering
+\includegraphics[width=1.0\textwidth]{./graphics/usbdDynamicAttachRegister.pdf}
+\caption{热插拔注册函数}\label{fig:usbdDynamicAttachRegister}
+\end{figure}
+
+
+\subsection{设备的识别和初始化}
+
+	设备的初始化工作需要在设备被我们的客户端驱动所识别之后才进行，在驱动初始化时我们注册好了热插拔的回调函数cp210xAttachCallback(),在
+	回调函数中我们最先做的就是识别设备，识别完成之后再对其进行初始化，识别设备通过
+	发送标准的USB设备请求命令来获取该设备的设备描述符,设备描述符当中包含有设备的类、子类、协议、厂商ID等信息，详细的USB设备描述符的信息如\autoref{fig:usdbDescriptorGet} 所示;
 
 \begin{figure}[!h]
 \centering
@@ -228,7 +250,14 @@ STATUS cp210xDrvInit(void)
 \caption{usb设备描述符信息结构}\label{fig:usdbDescriptorGet}
 \end{figure}
 
-使用usbdDescriptorGet()函数来获取设备描述符，其中第二、第三个参数是USB的标准请求命令，表示我们请求的是设备的标准描述符，获取到设备标准描述之后提取其中的厂商ID和产品ID，我们将该驱动支持的设备的厂商ID和设备ID存储在一个二维数组当中，然后通过遍历当前插入的设备的VID和PID是否在我们的数组当中来判断这个设备是否能够被我们的驱动所支持。设备识别的流程如\autoref{fig:device-recognize}所示，目前支持的设备的设备ID、产品ID的组合如\autoref{tab:目前支持的设备列表}所示。
+使用usbdDescriptorGet()函数来获取设备描述符，如下：\\
+\lstset{language=C}
+\begin{lstlisting}
+usbdDescriptorGet (cp210xHandle, nodeId,USB_RT_STANDARD | USB_RT_DEVICE,USB_DESCR_DEVICE,0, 0, sizeof(pBfr), pBfr, &actLen)) != OK
+//其中第三、第四个参数表示我们请求的是设备的标准描述符信息
+\end{lstlisting}
+
+	我们将标准设备描述符的信息放在pBfr这个结构体当中，然后从中提取厂商ID和产品ID，我们将该驱动支持的设备的厂商ID和设备ID存储在一个全局的二维数组当中，然后通过遍历当前插入的设备的VID和PID是否在我们的数组当中来判断这个设备是否能够被我们的驱动所支持。设备识别的流程如\autoref{fig:device-recognize}所示，目前支持的设备的设备ID、产品ID的组合如\autoref{tab:目前支持的设备列表}所示。
 \begin{figure}[!h]
 \centering
 \includegraphics[width=.9\textwidth]{./graphics/device-recognize.pdf}
@@ -251,15 +280,9 @@ STATUS cp210xDrvInit(void)
 \caption{目前支持的设备列表}\label{tab:目前支持的设备列表}
 \end{table}
 
-	
-	
-	
 
-
-
-\subsection{设备的初始化}
-
-	设备的初始化包括获取该USB设备的各种描述符信息。包括配置描述符信息、接口描述符信息、端点描述符信息。再通过所获得的这些信息来创建到输出端点的管道和对设备进行设置，我们在此处将设备的波特率初始化为115200，数据位为8位，1个停止位，没有奇偶校验，没有流控。设备的初始化流程图如\autoref{fig:device-init}所示。
+	设备的初始化包括获取该USB设备的各种描述符信息。包括配置描述符信息、接口描述符信息、端点描述符信息。再通过所获得的这些信息来对设备进行接口进行配置、创建输入/输出管道。
+	对于我们的USB口转串口设备还有一点特殊的地方在于它还需要配置串口的波特率、数据位、停止位、流控等信息，这是普通的USB设备所没有的。我们在此处将设备的波特率初始化为115200，数据位为8位，1个停止位，没有奇偶校验，没有流控。设备的初始化流程图如\autoref{fig:device-init}所示。
 \begin{figure}[!h]
 \centering
 \includegraphics[width=1.0\textwidth]{./graphics/Dev-Init.pdf}
@@ -290,63 +313,79 @@ STATUS cp210xDrvInit(void)
   usbdPipeCreate(cp210xHandle,pCp210xDev->nodeId,pOutEp->endpointAddress,pCfgDescr->configurationValue,pCp210xDev->interface,USB_XFRTYPE_BULK,USB_DIR_OUT,maxPacketSizeOut,0,0,&pCp210xDev->outPipeHandle)
 ...  
   usbdPipeCreate(cp210xHandle,pCp210xDev->nodeId,pInEp->endpointAddress,pCfgDescr->configurationValue,pCp210xDev->interface,USB_XFRTYPE_BULK,USB_DIR_IN,maxPacketSizeIn,0,0,&pCp210xDev->inPipeHandle)
+  
+  cp210xSetTermiosPort(pCp210xDev);
+  listenForInput(pCp210xDev);
+  initOutPut();
 ...
 \end{lstlisting}
+
+	在驱动程序初始化完成之后我们会立即启动listenForInput()这个函数来注册一个设备输入的回调函数来监听设备的输入动作，当设备产生中断输入数据时，USBD层就会通知我们注册的这个回调函数。另外我们会立即执行一个发送操作的触发函数initOutPut(),当设备的输出缓冲区有数据时会立即执行数据的发送，这是我们的单设备驱动程序中一个特殊的流程。关于数据详细的传输和控制的过程我们会在\autoref{sec:设备的读写} 设备的读写部分介绍。
 
 
 \subsection{设备打开/关闭函数}
 
-	用户在使用一个设备之前必须先对这个设备进行打开，在这个过程当中底层驱动的响应函数通常会将进行中断注册和使能设备工作配置等操作。但是对于我们的USB口转串口驱动而言，我们不需要自己管理中断，USBD层会为我们进行中断的管理工作，而配置工作我们在设备的初始化工作中已经完成，因此此处我们的设备打开工作，只需要简单的记录设备被打开的次数，并返回即可。设备的打开代码如下所示：
+	用户在使用一个设备之前必须先对这个设备进行打开，在这个过程当中底层驱动的响应函数通常会进行中断注册和使能设备工作配置等操作。但是对于我们的USB口转串口驱动而言，我们不需要自己管理中断，USBD层会为我们进行中断的管理工作，而配置工作我们在设备的初始化时已经完成，因此此处我们的设备打开工作，只需要简单的记录设备被打开的次数并返回即可。设备的打开/关闭代码如下所示：
 	
 \lstset{language=C}
 \begin{lstlisting}
 LOCAL CP210X_DEV * cp210xDevOpen(DEV_HDR *pDevHdr, char *name, int flags,int mode)
 {
-	CP210X_DEV *pCp210xDev;
-	pCp210xDev = (CP210X_DEV *)pDevHdr;
-	if(!pCp210xDev->connected)	
-		return (ERROR);
-		
-	(pCp210xDev->numOpen)++;
-	return (pCp210xDev);
+  CP210X_DEV *pCp210xDev;
+  pCp210xDev = (CP210X_DEV *)pDevHdr;
+  if(!pCp210xDev->connected)
+    return (ERROR);
+	
+  (pCp210xDev->numOpen)++;
+  return (pCp210xDev);
 }
+
+LOCAL CP210X_DEV * cp210xDevClose(CP210X_DEV *pCp210xDev)
+{
+  if(!pCp210xDev->connected)	
+    return (ERROR);
+	
+  --(pCp210xDev->numOpen);
+  return (pCp210xDev);
+}
+
 \end{lstlisting}
 
-	第一个DEV\_ HDR类型的参数即是我们之前所说的必须是设备自定义结构的第一个成员，在此时它会由 IO 子系统自动提供，IO 子系统会根据驱动号寻址到对应驱动函数时，然后将对应的系统设备列表中存储的设备结构作为第一个参数来调用 cp210xDevOpen()。我们之后在使用的时候需要首先将这个 DEV\_ HDR 结构转换成我们的自定义结构 CP210X\_ DEV。但是我们也可以直接将第一个参数的类型设置为自定义结构类型，那么对于我们USB口转串口驱动，以上  cp210xDevOpen() 函数的调用原型就变为：LOCAL int cp210xDevOpen(CP210X\_ DEV *pCp210xDev, char *name, int flags,int mode)这并不会造成什么影响。
+	cp210xDevOpen()函数用来承接系统的open()调用，它的第一个DEV\_ HDR类型的参数即是我们之前所说的必须是设备自定义结构的第一个成员，这个参数会由 I/O 子系统自动提供，I/O 子系统会根据驱动号寻址到对应驱动函数时，然后将对应的系统设备列表中存储的设备结构作为第一个参数来调用 cp210xDevOpen()。我们之后在使用的时候需要首先将这个 DEV\_ HDR 结构转换成我们的自定义结构 CP210X\_ DEV,但是我们也可以直接将第一个参数的类型设置为自定义结构类型，那么对于我们USB口转串口驱动，以上  cp210xDevOpen() 函数的调用原型就变为：LOCAL int cp210xDevOpen(CP210X\_ DEV *pCp210xDev, char *name, int flags,int mode)这并不会造成什么影响。
 		
-	第二个参数是设备名匹配后的剩余部分，注意不是我们传过来的设备名。VxWorks中使用最佳匹配的原则来匹配设备名，如我们打开一个设备"/ttyUsb/xyz",但是如果系统中并没有完全符合这个设备名的设备，而是只有名为"/ttyUsb/x"的设备,那么系统就会打开这个设备，而将匹配完成之后剩余的剩余的字符串"yz"传递给name。我们的应用中 open() 函数调用时的路径名应该与系统设备列表中的设备名是完全一致的，此处的 name 就会是一个空字符串，所以这个规则对于我们并没有什么影响。这是规则的主要用处在于处理文件系统层下的块设备，此处的name可以指向块设备节点名后的子目录和文件名。
+	第二个参数是设备名匹配后的剩余部分，注意不是我们传过来的设备名。VxWorks中使用最佳匹配的原则来匹配设备名，如我们打开一个设备"/ttyUsb/xyz",但是如果系统中并没有完全符合这个设备名的设备，而是只有名为"/ttyUsb/x"的设备,那么系统就会打开这个设备，而将匹配完成之后剩余的剩余的字符串"yz"传递给name。我们的应用中 open() 函数调用时的路径名应该与系统设备列表中的设备名是完全一致的，此处的 name 就会是一个空字符串，所以这个规则对于我们并没有什么影响。这是规则的主要用处在于处理文件系统层下的块设备，此时name可以指向块设备节点名后的子目录和文件名。
 
 	第三，四个参数就是用户 open() 调用时传入的第二，三个参数，IO 子系统不会对他们进行任何更改，只是原封不动的转发给了 cp210xDevOpen() 函数。
 	
-	该函数的返回值有如下两种值：一个有效的CP210X\_ DEV结构指针表示 cp210xDevOpen 调用成功，ERROR 则表示 cp210xDevOpen()调用失败，IO 子系统会根据返回的指针是否有效来决定返回一个文件描述符还是返回一个错误。cp210xDevOpen() 函数的返回值非常重要，这个指针将被 IO 子系统保存，用于其后对驱动中读写，控制函数的调用。这个返回的指针也会作为这些函数的第一个参数。
+	该函数的返回值有如下两种值：一个有效的CP210X\_ DEV结构指针表示 cp210xDevOpen 调用成功，ERROR 则表示 cp210xDevOpen()调用失败，I/O 子系统会根据返回的指针是否有效来决定返回一个文件描述符还是返回一个错误。cp210xDevOpen() 函数的返回值非常重要，这个指针将被 IO 子系统保存，用于其后对驱动中读写，控制函数的调用,这个返回的指针也会作为这些函数的第一个参数。
 	
 	设备的关闭和设备的打开操作是相反的操作，在关闭操作当中我们只需要对设备记录的打开次数进行减法操作即可。
 
-\subsection{设备的读写}
+\subsection{设备的读写}\label{sec:设备的读写}
 	在open()操作成功之后，我们可以得到一个返回值，这个返回值就是设备的文件描述符，然后我们就可以使用这个文件描述符对设备进行read(),write()等操作。我们的USB口转串口驱动的读写函数原型如下：
 
 \lstset{language=C}
 \begin{lstlisting}
-LOCAL int cp210xDevWrite(CP210X_DEV *pCp210xDev, char *buffer,UINT32 nBytes)
-LOCAL int cp210xDevRead(CP210X_DEV *pCp210xDev, char *buffer,UINT32 nBytes)
+LOCAL CP210X_DEV * cp210xDevWrite(CP210X_DEV *pCp210xDev, char *buffer,UINT32 nBytes)
+LOCAL CP210X_DEV * cp210xDevRead(CP210X_DEV *pCp210xDev, char *buffer,UINT32 nBytes)
 \end{lstlisting}
 
-此处我们将这两个函数的第一个参数类型直接设置为 CP210X\_ DEV 结构类型而不是DEV\_ HDR。
 	在驱动的内部我们会为每一个连接到系统上的设备建立一个输入循环缓冲区和一个输出循环缓冲区，分别用于从设备接收的数据和接收上层应用的输出数据。缓存空间的大小作为以宏的方式定义在头文件当中，方便以后改动，分别定义为：WRITE\_ BUFFER\_ SIZE和READ\_ BUFFER\_ SIZE。
 	
 	由于我们特殊驱动程序的要求与普通流程下的驱动有所不同，其初始化方式比较特殊，对于数据的传输操作的流程也有相应的需求。我们在此需要对其数据流进行重新的设计。
 	
 	对于数据的输出若系统中没有连接上USB口转串口的设备时，那么所有的上层应用往外输出的数据就只会写入到输出循环缓冲区当中，	
-	设备在连接上系统并初始化之后就先查询缓冲区中是否存在数据，若存在数据则将其发送，若不存在则等待其他程序调用write写入数据来触发数据的发送操作，系统调用write()在该驱动程序中对应的底层函数为cp210xDevWrite()函数，这个函数会接受write()发送过来的数据，并将其存入缓冲区中，并判断是否需要触发数据的发送操作。发送数据的触发操作只会在设备当前没有数据发送时完成，若调用write()时设备已经在发送数据，则只需要将数据存入缓冲区即可，设备发送完当前正在发送的数据之后会去判断缓冲区中是否还有数据，有数据则会继续发送。其流程图如\autoref{fig:outData-diagram} 所示。
+	设备在连接上系统并初始化之后就先查询缓冲区中是否存在数据，若存在数据则将其发送，若不存在则等待其他程序调用write写入数据来触发数据的发送操作，系统调用write()在该驱动程序中对应的底层函数为cp210xDevWrite()函数，这个函数会接受write()发送过来的数据，并将其存入输出缓冲区中，并判断是否需要触发数据的发送操作。发送数据的触发操作只会在设备当前没有数据发送时完成，若调用write()时设备已经在发送数据，则只需要将数据存入缓冲区即可，设备发送完当前正在发送的数据之后会去判断缓冲区中是否还有数据，有数据则会继续发送。其流程图如\autoref{fig:outData-diagram} 所示。
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=.7\textwidth]{./graphics/data-send-diagram.pdf}
-\caption{数据发送逻辑图}\label{fig:outData-diagram}
+\includegraphics[width=1.0\textwidth]{./graphics/SDevDataSend.pdf}
+\caption{单设备驱动数据发送逻辑图}\label{fig:outData-diagram}
 \end{figure}
 
-
-	对于数据的输入操作，我们会事先创建好一个用来读取数据的USB IRP在这个IRP中我们注册一个回调函数，在USB当中设备的中断会由USBD层来替我们进行管理，当有数据到来时USBD层会调用我们注册的回调函数来通知我们。在驱动程序初始化完成之后我们就会启动listenForInput()这个函数来注册一个USBD的通知过程，一个接收IRP使用完成之后，我们需要重新注册一次，因为每一次的IRP都是单次有效的，所以在cp210xIrpCallback()中我们接受完这一次的IRP的数据之后， 需要新建另一个IRP重新启动下一次的listenForInput()过程。部分关键代码如下：
+	对于数据的输入操作，因为数据的输入是要依赖与实际的硬件的，不像输出操作一样存在“假”的输入。我们在设备的初始化完成之后我们会立即启动listenForInput()这个函数来注册一个设备输入的回调函数来监听设备的输入动作，当设备产生中断输入数据时，USBD层就会通知我们注册的这个回调函数，在这个回调函数中我们会处理设备输入的数据。
+	
+	在listenForInput()当中我们先创建好一个用来读取数据的USB IRP在这个IRP中我们注册回调函数为cp210xIrpCallback，当有数据输入数据到来时USBD层会调用我们注册的回调函数来通知我们。在处理完一次的回调之后我们需要启动下一次的监听，因为每一次的IRP都是单次有效的，所以在cp210xIrpCallback()中我们接受完这一次的IRP的数据之后， 需要新建另一个IRP重新启动下一次的listenForInput()过程。部分关键代码如下：
 \lstset{language=C}
 \begin{lstlisting}
 
@@ -364,25 +403,22 @@ LOCAL STATUS listenForInput(CP210X_DEV *pCp210xDev)
 LOCAL void cp210xIrpCallback(pVOID p)
 {
 ...
-	if(pIrp == &pCp210xDev->inIrp && pCp210xDev->connected == TRUE)
-	{
-		if(pIrp->result == OK)
-			copy_to_readBuf(pCp210xDev);
+  if(pIrp == &pCp210xDev->inIrp && pCp210xDev->connected == TRUE)
+  {
+	if(pIrp->result == OK)
+	  //接收数据
 			
-		if (pIrp->result != S_usbHcdLib_IRP_CANCELED)
-			listenForInput(pCp210xDev);
-	}
+	if (pIrp->result != S_usbHcdLib_IRP_CANCELED)
+	  listenForInput(pCp210xDev);
+  }
 }
 
 \end{lstlisting}
 
-	
+
 	因为我们的驱动的程序的主要功能就在于数据的传输，在数据的传输过程中对于缓冲区的设计和信号量的使用方式直接影响到我们的驱动程序性能，因此有必要对这两部分再进行详细的描述。
-
-
-\subsubsection{环形缓冲区的设计和实现}
-
-	在我们的USB口转串口驱动程序当中 ,我们需要解决低速设备和处理器之间的速度匹配问题和数据丢失问题 ，这可以通过建立环形数据缓冲的方式来解决。当数据到达时,我们先将数据放入到缓冲区当中，当上层应用需要取出数据或者设备空闲了可以进行数据的发送工作的时候，我们再从缓冲区中将数据取出。
+	
+\subsubsection{环形缓冲区的设计和控制}
 		
   应用程序、设备驱动和环形缓冲区的关系如\autoref{fig:设备数据缓冲}所示，通过环形数据缓冲，我们可以解决速度匹配的问题和数据丢失的问题，应用程序也无需阻塞等待设备的空闲，只需将数据发送到我们的缓冲区中即可。
   
@@ -392,25 +428,27 @@ LOCAL void cp210xIrpCallback(pVOID p)
 \caption{设备数据缓冲}\label{fig:设备数据缓冲}
 \end{figure}
 
-	 
+ 
 	我们使用循环队列实现的来实现环形缓冲区，由于计算机的内存是线性地址空间，因此从逻辑上实现环形缓冲区时通常需要4个指针：
 	 \begin{itemize}
 	 \item 在内存中实际开始位置的指针；
-	 \item 在内存中实际结束位置的指针，或者缓冲区的长度，由于我们已经在缓冲区的头部定义了缓冲区的长度，所以这个指针我们不再需要；
+	 \item 在内存中实际结束位置的指针，或者缓冲区的长度，由于我们已经在驱动中定义了缓冲区的长度为WRITE\_ BUFFER\_ SIZE和READ\_ BUFFER\_ SIZE，所以这个指针我们不再需要；
 	 \item 存储在缓冲区中的有效数据的开始位置(读指针);
 	 \item 存储在缓冲区中的有效数据的结束位置的指针(写指针)。
 	 \end{itemize}
 	
-当数据元素插入或者是删除时，我们不需要移动其余的数据元素存储位置，只需要移动队头和队尾指针即可。在设备初始化时，将设备的环形缓冲区清空，队头指针和队尾指针均设为 0,当缓冲区中接收到一个数据时，将此数据保存到队尾的位置并将队尾指针加1，当缓冲区中取走一个数据时，我们将队头指针减一。
+	当数据元素插入或者是删除时，我们不需要移动其余的数据元素存储位置，只需要移动队头和队尾指针即可。在设备初始化时，将设备的环形缓冲区清空，队头指针和队尾指针均设为 0,当缓冲区中接收到一个数据时，将此数据保存到队尾的位置并将队尾指针加1，当缓冲区中取走一个数据时，我们将队头指针减一。
 
 	无论是对于读缓冲区还是写缓冲区，我们都需要解决的一个问题是当循环缓冲区中的数据已经满了之后，再有数据需要进入到缓冲区当中时，我们怎么进行处理，此处我们选择的策略是遵循先进先出的原则来覆盖数据。这样操作的好处是可以防止最新的数据丢失，而老的数据可能已经失去了时效性。
 
 	对于输入缓冲区，我们使用一个读互斥信号量cp210xReadMutex和一个读二进制信号量ReadblockSem来进行缓冲区的控制，cp210xReadMutex的作用保证对读缓冲区的正确访问顺序，ReadblockSem的作用是用于对上层读任务和底层驱动的写任务进行同步。在使用ReadblockSem时我们会设置一个超时时间TIMEOUT，当时间超过时semTake()操作就会返回一个错误，我们上层读取任务此时就会得到一个错误返回，说明无法读取到数据。
+	当需要读取 nbytes 个字节而缓冲区内的字节不够时，read就会阻塞，直到超时返回或者USBD层通知你有新的数据到来时再继续进行读操作。同时也在驱动中启动了一个计时器，如果在计时器时间到了之后，还未能满足需要读取的字节数，则退出本次读写操作，返回当前已处理的字节数。
 
 \lstset{language=C}
 \begin{lstlisting}
-funA()//上层应用读取任务
-{	
+cp210xDevRead(...)//上层应用读取任务
+{
+...
 	semTake(cp210xReadMutex,WAIT_FOR_EVER)	
 	if(available == 0)
 	{
@@ -427,14 +465,15 @@ funA()//上层应用读取任务
 	...
 }
 
-funB()//底层从硬件接收数据
+cp210xIrpCallback(...)//底层从硬件接收数据
 {
+...
 	semTake(cp210xReadMutex,WAIT_FOR_EVER)
 	if(available == 0)//缓冲区中没有数据，则释放一次ReadblockSem
 		semGive(ReadblockSem);
 	copy_to_readBuf()//向读缓冲区中写入数据
 	semGive(cp210xReadMutex);
-	
+...
 }
 \end{lstlisting}  
 
@@ -443,30 +482,32 @@ funB()//底层从硬件接收数据
 
 \lstset{language=C}
 \begin{lstlisting}
-funA()//上层应用写任务
-{	
-	semTake(cp210xWriteMutex,WAIT_FOR_EVER)	
-	copy_to_writeBuf; /*从缓冲区读取数据*/
-	semGive(cp210xWriteMutex)
-	...
+cp210xDevWrite(...)//上层应用写任务
+{
+...	
+  semTake(cp210xWriteMutex,WAIT_FOR_EVER);
+  copy_to_writeBuf; /*从缓冲区读取数据*/
+  semGive(cp210xWriteMutex);
+...
 }
 
-funB()//底层从缓冲区读取数据写入设备
+initOutPut()//底层从缓冲区读取数据写入设备
 {
-	semTake(cp210xWriteMutex,WAIT_FOR_EVER)
-	if(available == 0)
-	{
-		semGive(cp210xWriteMutex);
-		return;
-	}	
-	copy_from_writeBuf()//向读缓冲区中写入数据
-	initOutIrp();//构建数据发送IRP
+...
+  semTake(cp210xWriteMutex,WAIT_FOR_EVER)
+  if(available == 0)
+  {
 	semGive(cp210xWriteMutex);
-	...
+	return;
+  }	
+  copy_from_writeBuf()//从输出缓冲区中取出数据发送
+  initOutIrp();//构建数据发送IRP
+  semGive(cp210xWriteMutex);
+  ...
 }
 \end{lstlisting}  
 
-cp210xDevRead 和 cp210xDevWrite 的实现非常相似，只是更换了一下数据的传输方向。cp210xDevRead在底层也有一个循环缓冲区用来接收从USB口转串口设备发送来的数据，当需要读取 nbytes 个字节而缓冲区内的字节不够时，read就会阻塞，直到超时返回或者USBD层通知你有新的数据到来时再继续进行读操作。同时也在驱动中启动了一个计时器，如果在计时器时间到了之后，还未能满足需要读取的字节数，则退出本次读写操作，返回当前已处理的字节数。
+
 
 
 
@@ -478,7 +519,7 @@ cp210xDevRead 和 cp210xDevWrite 的实现非常相似，只是更换了一下�
 设备控制函数原型如下：
 \lstset{language=C}
 \begin{lstlisting}
-LOCAL int cp210xDevIoctl(CP210X_DEV *pCp210xDev, int request, void *someArg )
+LOCAL CP210X_DEV * cp210xDevIoctl(CP210X_DEV *pCp210xDev, int request, void *someArg )
 \end{lstlisting}
 
 对于我们的 USB口转串口驱动，在实际使用中，再配置参数和命令有很多，但是目前我们只提供设备的波特率、数据位、校验位、流控的参数和命令。这些控制对于普通的USB设备而言是没有的，他们在定义上属于USB的厂商自定义请求，在我们的驱动程序的cp210xDevIoctl()函数当中最后都要使用usbdVendorSpecific()函数来发送USB的厂商自定义请求，该函数的原型如\autoref{fig:usbdVendorSpecific}所示。
@@ -517,7 +558,7 @@ LOCAL int cp210xDevIoctl(CP210X_DEV *pCp210xDev, int request, void *someArg )
 至此，我们已经完成了该特定需求下的USB口转串口驱动程序的所有组成部分的设计和实现。
 
 \section{通用多设备驱动的实现}
-多设备支持的驱动程序在初始化的时候与特定需求单设备支持的驱动初始化的过程是不一样的，需要支持多设备，首先需要在识别设备后给每一个设备分配一个设备名，并加入到系统设备表当中，然后需要给每一个设备初始化自己的设备结构体多设备下的驱动运行流程如\autoref{fig:MDev-Drv-diagram}所示。
+	多设备驱动与特殊需求的单设备驱动最明显的不同之处在于整个驱动程序的启动流程不一样，其次需要支持多设备，要在识别设备后给每一个设备分配一个设备名，并加入到系统设备表当中，然后需要给每一个设备初始化自己的设备自定义结构体，多设备下的启动流程如\autoref{fig:MDev-Drv-diagram}所示。
 
 \begin{figure}[p, !h]
 \centering
@@ -534,7 +575,7 @@ LOCAL int cp210xDevIoctl(CP210X_DEV *pCp210xDev, int request, void *someArg )
 \end{figure}
 
 
-与特定需求单设备的驱动相比，这里驱动程序的变化主要在驱动的初始化和读写函数部分，同时设备自定义的数据结构会更加复杂，需要保存更多与具体的设备相关的信息。
+	与特定需求单设备的驱动相比，这里驱动程序的变化主要在驱动和设备的初始化和对于数据的输出部分，同时设备自定义的数据结构会更加复杂，需要保存更多与具体的设备相关的信息。
 
 \subsection{设备的自定义结构体}
 多设备的驱动自定义结构体的定义如下所示：
@@ -626,6 +667,9 @@ LOCAL STATUS cp210xAttachCallback(USBD_NODE_ID nodeId, UINT16 attachAction,UINT1
 \end{lstlisting}
 
 
+
+
+
 \subsection{设备读写}
 	
 		
@@ -640,8 +684,16 @@ LOCAL STATUS cp210xAttachCallback(USBD_NODE_ID nodeId, UINT16 attachAction,UINT1
 	\end{enumerate}
 	
 	
-	对于数据发送的逻辑控制，我们使用一个互斥信号cp210xWriteMutex对输出缓冲区进行控制，首先在写入数据的时候需要进行互斥写，因为此时设备有可能正在从缓冲区当中取数据进行输出操作，那么这是写入输出缓冲区就需要等待，否则可能会造成缓冲区的混乱，造成输出结果与输入数据不一致。当设备输出从缓冲区拷贝完成之后就会释放互斥信号量，此时写入操作就可以往输出缓冲区中写入数据。
+	多设备驱动的数据发送逻辑如\autoref{fig:MDevDataSend}所示，和单设备情况下相比我们此时少了在设备插入时触发数据发送操作这一部分的逻辑。因为对于一个多设备驱动而言，其设备的读写缓冲区的建立是在设备识别之后，设备名也是在设备初始化完成之后才出现在系统当中。因此不可能存在先往输出缓冲区中写入了数据，设备插入系统之后就可以直接进行数据发送的逻辑。
 	
+\begin{figure}[!h]
+\centering
+\includegraphics[width=1.0\textwidth]{./graphics/MDevDataSend.pdf}
+\caption{多设备驱动数据发送逻辑图}\label{fig:MDevDataSend}
+\end{figure}
+
+	同样我们在多设备驱动下使用一个互斥信号cp210xWriteMutex对输出缓冲区进行控制，首先在写入数据的时候需要进行互斥写，因为此时设备有可能正在从缓冲区当中取数据进行输出操作，那么这时写入输出缓冲区就需要等待，否则可能会造成缓冲区的混乱，造成输出结果与输入数据不一致。当设备输出从缓冲区拷贝完成之后就会释放互斥信号量，此时写入操作就可以往输出缓冲区中写入数据。
+
 	
 	多设备下的数据的输入  操作的实现方式与单设备下的相同， 都是在设备接入系统之后就向USBD层注册一个回调函数和一个IRP接收设备的输入，即listenForInput ()，这个函数的实现与单设备驱动当中的一致，然后在cp210xIrpCallback()函数当中处理设备的输入，并启动下一次的listenForInput (),
 
